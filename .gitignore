@@ -1,0 +1,8 @@
+node_modules/
+.research/
+original-script.js
+test-results/
+playwright-report/
+*.log
+release/
+.DS_Store

@@ -1,0 +1,24 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - name: Check version
+        run: node --input-type=module -e "import {VERSION} from './src/config.js'; if(process.env.GITHUB_REF_NAME !== 'v'+VERSION) process.exit(1)"
+      - run: git archive --format=zip --prefix=beautify-studio/ -o beautify-studio.zip HEAD
+      - name: Publish release files
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" "dist/美化工作室.json" dist/beautify-studio.js beautify-studio.zip --generate-notes --title "美化工作室 $GITHUB_REF_NAME"

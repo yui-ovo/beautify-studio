@@ -1,0 +1,89 @@
+# ✦ 美化工作室
+
+**把喜欢的 SillyTavern UI 美化，整理成独立的 TauriTavern 适配副本。**
+
+银灰色 INS 风格工作台，支持直接选择酒馆内已导入的美化，也支持上传 JSON。基于用户提供的「TT 美化适配 v0.2.14」重构。
+
+![美化工作室桌面预览，使用示例数据](docs/preview-desktop.png)
+
+[手机界面预览](docs/preview-mobile.png)
+
+## 安装与升级
+
+1. 下载 [`dist/美化工作室.json`](dist/美化工作室.json)，不要把它当作 UI 主题导入。
+2. 在**酒馆助手 → 脚本库 → 全局脚本**中导入并启用。
+3. 升级时先停用旧的「TT 美化适配」脚本，避免两个版本同时注册按钮与样式。脚本 ID 沿用原版，以便识别升级；如果导入器询问替换，选择替换旧版本。
+4. 从酒馆助手按钮或魔法棒菜单打开 **美化工作室**。
+
+此项目是酒馆助手全局脚本，不是通过“扩展安装”URL 安装的 SillyTavern 扩展。
+
+## 使用
+
+- **酒馆内的美化**：读取已经保存的 UI 美化列表，点击一款即可分析。读取、选择不会切换当前美化。色块是主题配色示意，不是真实主题截图。
+- **上传 JSON**：选择或拖入 UI 美化 JSON（最大 10 MB）。支持只有颜色设置、没有自定义 CSS 的主题。
+- **调整适配**：隐藏快速扮演按钮、保持隐藏按钮状态、修复布局冲突。
+- **生成并应用**：通过酒馆原生导入与切换流程创建副本。重名时添加数字后缀，不覆盖原主题。随后核对保存的副本 CSS。
+- **仅下载适配版**：下载转换后的 UI 主题 JSON，用于手动导入。它与安装工作室的“脚本 JSON”不同。
+- **布局诊断**：导出视口、元素几何和冲突统计，便于排查手机键盘、刘海区和抽屉问题。
+
+原“隐藏 TT Agent 原子按钮”选项与强制隐藏逻辑已删除。Agent 被酒馆本身设为隐藏时，“保持隐藏按钮的状态”仍尊重原状态。
+
+导入含 `@import` 的主题时，工作室会暂时收起，让酒馆自身的确认窗口可操作；最长等待两分钟。主题适配副本保存通过后才提示核实成功。聊天/角色绑定主题的后续切换遵循 TauriTavern 原有规则。
+
+## 本地开发
+
+需要 Node.js 22 或更高版本。
+
+```sh
+npm ci
+npm run dev
+```
+
+打开 `http://127.0.0.1:4173`。此页面加载与发行版相同的脚本，使用 `preview/mock-host.js` 模拟酒馆接口。示例数据和模拟保存仅存在于当前预览页，**不会打包进发行脚本**，不代表已经连接真实酒馆。
+
+```sh
+npm test       # 核心转换、校验、宿主读取与保存验证
+npm run build # 生成 JS 与可导入的酒馆助手 JSON
+npm run check # 测试 + 构建
+```
+
+预览构建自动监听源码；编辑后刷新页面。构建无运行时 CDN、外部字体或图片依赖。
+
+## 项目结构
+
+```text
+src/
+  config.js           版本、选项、兼容标记
+  core/adapter.js     CSS 分析与主题转换，不依赖 DOM
+  core/validation.js  UI 主题结构校验
+  host/themes.js     酒馆内美化读取、保存验证
+  host/diagnostics.js 布局诊断
+  ui/markup.js       工作台结构
+  ui/studio.css      设计变量、桌面与手机样式
+  main.js            酒馆助手入口、交互与生命周期
+preview/             独立开发预览与模拟宿主
+tests/               Node.js 自动测试
+scripts/             构建、预览服务与发布打包
+dist/                可直接使用的发行文件
+docs/                架构、验证说明与发布步骤
+```
+
+## 兼容边界
+
+- 面向安装了酒馆助手的 SillyTavern / TauriTavern。普通 SillyTavern 中可以生成面向 TT 的副本。
+- 美化列表使用宿主的 `/api/settings/get`，原生导入依赖 `#themes`、`#ui_preset_import_file` 和 `#custom-style`。宿主改变接口后可能需要适配；相关代码集中在 `host` 与 `main.js`。
+- CSS 检查是保守的启发式规则，不是完整 CSS 解析器。复杂嵌套、混合选择器与第三方扩展布局可能需手动检查；风险清单不是“全部兼容”的承诺。
+- 面板位于 Shadow DOM，避免外部美化污染界面；不会在面板内执行所选主题的任意 CSS。
+- 已有自动测试与模拟宿主浏览器验证；尚未完成真实设备上的 TauriTavern/iOS/Android 导入、键盘、角色绑定回归。详见 [验证记录](docs/VALIDATION.md)。
+
+## 公开发布到 GitHub
+
+项目仓库：[yui-ovo/beautify-studio](https://github.com/yui-ovo/beautify-studio)。
+
+源码、可导入脚本和预览图随仓库提供。维护流程见 [发布说明](docs/RELEASING.md)；打 `v*` 标签可自动创建包含脚本 JSON 的 Release。
+
+## 来源与授权
+
+原脚本来自用户提供的 `TT美化适配v0.2.14.json`，附件未附带许可证或作者授权信息。因此本项目没有擅自替原代码指定 MIT 等开源许可证。**公开分发前，请由维护者确认原脚本分发权限并补充 LICENSE 与署名**。代码结构和发布流程已准备完成，授权状态单独记录在 [NOTICE](NOTICE.md)。
+
+视觉参考为用户提供的银灰 INS 拼贴图；仅提炼配色、布局与形状，没有复制参考截图或使用其中的商业素材。设计方法参考 [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md)，项目自己的规则见 [DESIGN.md](DESIGN.md)。

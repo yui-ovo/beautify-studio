@@ -1,0 +1,5 @@
+{
+  "name": "测试美化 · 银色来信",
+  "blur_tint_color": "#bac0c5",
+  "custom_css": "#sheld { top: 8px; height: 100vh; color: #eeeeee; }\n#left-nav-panel { top: 30px; }"
+}
