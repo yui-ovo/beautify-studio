@@ -396,31 +396,8 @@ async function refreshLibrary(root) {
     const themes = await readInstalledThemes(resolveHostWindow());
     root.querySelector('.library-count').textContent = `${themes.length} 款已导入的美化`;
     if (!themes.length) throw new Error('酒馆还没有已导入的美化，可以先上传一个 JSON。');
-    for (const theme of themes) {
-      const button = getHostDocument().createElement('button');
-      button.type = 'button';
-      button.className = 'theme-card';
-      button.setAttribute('aria-pressed', String(selectedFileName === '酒馆内的美化' && selectedTheme?.name === theme.name));
-      button.title = theme.name;
-      const thumbnail = getHostDocument().createElement('div');
-      thumbnail.className = 'theme-thumbnail';
-      thumbnail.setAttribute('aria-hidden','true');
-      const swatch = theme.blur_tint_color || theme.chat_tint_color;
-      if (typeof swatch === 'string' && resolveHostWindow().CSS.supports('color', swatch)) thumbnail.style.setProperty('--swatch', swatch);
-      const name = getHostDocument().createElement('span');
-      name.className = 'theme-name';
-      name.textContent = theme.name;
-      button.append(thumbnail, name);
-      button.addEventListener('click', () => {
-        if (busy) return;
-        selectedTheme = JSON.parse(JSON.stringify(theme));
-        selectedFileName = '酒馆内的美化';
-        for (const card of library.querySelectorAll('.theme-card')) card.setAttribute('aria-pressed', String(card === button));
-        syncPanelFromState(root);
-        setPanelStatus(root, `已选择「${theme.name}」。生成时会创建独立的 TT 适配副本。`, 'success');
-      });
-      library.append(button);
-    }
+    root.__installedThemes = themes;
+    renderThemeCards(root, themes);
   } catch (error) {
     root.querySelector('.library-count').textContent = '暂无可用美化';
     const empty = getHostDocument().createElement('div');
@@ -432,6 +409,49 @@ async function refreshLibrary(root) {
     empty.append(heading, detail);
     library.append(empty);
   } finally { refresh.disabled = busy; library.removeAttribute('aria-busy'); }
+}
+
+function safeColor(theme, keys, fallback) {
+  const css = resolveHostWindow().CSS;
+  for (const key of keys) {
+    const value = String(theme?.[key] || '').trim();
+    if (value && css?.supports?.('color', value)) return value;
+  }
+  return fallback;
+}
+
+function createThemeThumbnail(theme) {
+  const thumbnail = getHostDocument().createElement('div');
+  thumbnail.className = 'theme-thumbnail';
+  thumbnail.setAttribute('aria-hidden', 'true');
+  thumbnail.style.setProperty('--theme-bg', safeColor(theme, ['chat_tint_color', 'blur_tint_color'], '#d5d7d8'));
+  thumbnail.style.setProperty('--theme-text', safeColor(theme, ['main_text_color'], '#373a3c'));
+  thumbnail.style.setProperty('--theme-user', safeColor(theme, ['user_mes_blur_tint_color', 'blur_tint_color'], '#aeb4b8'));
+  thumbnail.style.setProperty('--theme-bot', safeColor(theme, ['bot_mes_blur_tint_color', 'blur_tint_color'], '#f0f1f1'));
+  thumbnail.innerHTML = '<span class="preview-topbar"></span><span class="preview-avatar"></span><span class="preview-message preview-message-user"></span><span class="preview-message preview-message-bot"></span><span class="preview-composer"></span>';
+  return thumbnail;
+}
+
+function renderThemeCards(root, themes) {
+  const library = root.querySelector('.library');
+  library.replaceChildren();
+  if (!themes.length) {
+    const empty = getHostDocument().createElement('div'); empty.className = 'library-empty'; empty.textContent = '没有找到对应美化'; library.append(empty); return;
+  }
+  for (const theme of themes) {
+    const button = getHostDocument().createElement('button');
+    button.type = 'button'; button.className = 'theme-card'; button.title = theme.name;
+    button.setAttribute('aria-pressed', String(selectedFileName === '酒馆内的美化' && selectedTheme?.name === theme.name));
+    const name = getHostDocument().createElement('span'); name.className = 'theme-name'; name.textContent = theme.name;
+    button.append(createThemeThumbnail(theme), name);
+    button.addEventListener('click', () => {
+      if (busy) return;
+      selectedTheme = JSON.parse(JSON.stringify(theme)); selectedFileName = '酒馆内的美化';
+      for (const card of library.querySelectorAll('.theme-card')) card.setAttribute('aria-pressed', String(card === button));
+      syncPanelFromState(root); setPanelStatus(root, `已选择「${theme.name}」。生成时会创建独立的 TT 适配副本。`, 'success');
+    });
+    library.append(button);
+  }
 }
 
 function openPanel(preferredDocument = null) {
@@ -476,6 +496,19 @@ function openPanel(preferredDocument = null) {
     });
   }
   root.querySelector('.refresh').addEventListener('click', () => refreshLibrary(root));
+  const searchToggle = root.querySelector('.search-toggle');
+  const searchPanel = root.querySelector('.theme-search');
+  const searchInput = root.querySelector('.search-input');
+  searchToggle.addEventListener('click', () => {
+    const expanded = searchToggle.getAttribute('aria-expanded') === 'true';
+    searchToggle.setAttribute('aria-expanded', String(!expanded)); searchPanel.hidden = expanded;
+    if (!expanded) searchInput.focus(); else { searchInput.value = ''; renderThemeCards(root, root.__installedThemes || []); }
+  });
+  searchInput.addEventListener('input', () => {
+    const query = searchInput.value.trim().toLocaleLowerCase();
+    renderThemeCards(root, (root.__installedThemes || []).filter(theme => theme.name.toLocaleLowerCase().includes(query)));
+    root.querySelector('.library-count').textContent = query ? `${root.querySelectorAll('.theme-card').length} 款匹配美化` : `${(root.__installedThemes || []).length} 款已导入的美化`;
+  });
   const input = root.querySelector('.file-input');
   root.querySelector('.choose')?.addEventListener('click', () => input?.click());
   const dropzone = root.querySelector('.choose');
