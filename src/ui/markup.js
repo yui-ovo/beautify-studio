@@ -29,11 +29,12 @@ export function panelMarkup(detected) {
             <label class="option"><span class="option-number">01</span><span><b>隐藏快速扮演按钮</b><small>隐藏墨镜黑衣人，不影响发送与角色回复。</small></span><input data-option="hideImpersonate" type="checkbox" role="switch" aria-label="隐藏快速扮演按钮"></label>
             <label class="option"><span class="option-number">02</span><span><b>保持隐藏按钮的状态</b><small>防止美化让已经隐藏的按钮重新出现。</small></span><input data-option="preserveHiddenControls" type="checkbox" role="switch" aria-label="保持隐藏按钮的状态"></label>
             <label class="option"><span class="option-number">03</span><span><b>修复布局冲突</b><small>适配聊天区域、顶部抽屉与悬浮输入栏。</small></span><input data-option="mobileGeometry" type="checkbox" role="switch" aria-label="修复布局冲突"></label>
+            <label class="option"><span class="option-number">04</span><span><b>段落首行缩进</b><small>给聊天内容的每个段落增加 2em 首行缩进。</small></span><input data-option="indentParagraphs" type="checkbox" role="switch" aria-label="段落首行缩进"></label>
           </div><div class="settings-note"><span>♡</span> 保留原来的美化，所有调整写入新副本。</div></div>
           <div class="check-card"><div class="check-heading"><h3>${star} 兼容检查</h3><span class="check-count">等待选择</span></div><div class="report"><div class="risk" data-level="idle"><b>好看的开始，从选择开始</b><span>选择一款美化后，在这里查看适配建议。</span></div></div></div>
           </section>
         </div>
-        <footer class="actions"><div class="action-buttons"><button class="action primary import-apply needs-theme" type="button" disabled>生成并应用 ${arrow}</button><div class="secondary-actions"><button class="action download needs-theme" type="button" disabled>↓ 仅下载适配版</button><button class="action diagnose" type="button">布局诊断 ↗</button></div></div></footer>
+        <footer class="actions"><div class="action-buttons"><button class="action primary import-apply needs-theme" type="button" disabled>生成并应用 ${arrow}</button><div class="secondary-actions"><button class="action batch-import needs-host" type="button">批量生成并导入</button><button class="action download needs-theme" type="button" disabled>↓ 仅下载适配版</button><button class="action diagnose" type="button">布局诊断 ↗</button></div></div></footer>
         <div class="status" role="status" aria-live="polite">选择美化后即可开始。原主题会完整保留。</div>
         <div class="colophon"><span>BEAUTIFY STUDIO</span><span>WITH A LITTLE ${star} & A LOT OF CARE</span><span>美化工作室</span></div>
       </div>

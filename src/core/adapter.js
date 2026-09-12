@@ -505,6 +505,13 @@ export function buildCompatibilityCss(options = {}, context = {}) {
     );
   }
 
+  if (settings.indentParagraphs) {
+    rules.push(
+      '/* Add a first-line indent only to chat paragraphs. */',
+      'html body #chat p { text-indent: 2em; }',
+    );
+  }
+
 
   if (settings.mobileGeometry && composer?.overlay) {
     rules.push(

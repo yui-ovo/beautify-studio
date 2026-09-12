@@ -55,3 +55,10 @@ test('risk analysis is stable across repeated calls', () => {
   assert.deepEqual(analyzeCss(css),analyzeCss(css));
   assert.ok(analyzeCss(css).length >= 2);
 });
+
+test('paragraph indentation is scoped to chat and remains idempotent', () => {
+  const adapted = adaptTheme({name:'缩进',custom_css:'.mes_text p { color:red; }'}, { indentParagraphs:true });
+  assert.match(adapted.custom_css, /#chat p \{ text-indent: 2em; \}/);
+  assert.doesNotMatch(adapted.custom_css, /(^|\})\s*p\s*\{/);
+  assert.equal(adaptTheme(adapted, { indentParagraphs:true }).custom_css, adapted.custom_css);
+});

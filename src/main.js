@@ -303,7 +303,28 @@ function setPanelStatus(root, text, kind = 'info') {
 function setPanelActions(root, enabled) {
   for (const button of root.querySelectorAll('.needs-theme')) button.disabled = !enabled || busy;
   for (const control of root.querySelectorAll('.theme-card, [data-source], [data-option], .choose, .refresh')) control.disabled = busy;
+  root.querySelector('.batch-import').disabled = busy;
   if (!getThemeSelect() || !getHostDocument().getElementById('ui_preset_import_file')) root.querySelector('.import-apply').disabled = true;
+}
+
+async function batchImportThemes(root) {
+  if (busy) return;
+  const themes = root.__installedThemes || await readInstalledThemes(resolveHostWindow());
+  if (!themes.length) throw new Error('没有可批量处理的已导入美化。');
+  busy = true; setPanelActions(root, false);
+  let completed = 0;
+  try {
+    for (const source of themes) {
+      const adapted = adaptTheme(source, options);
+      adapted.name = getUniqueThemeName(adapted.name);
+      setPanelStatus(root, `正在导入 ${completed + 1}/${themes.length}：${adapted.name}…`);
+      await importAndApplyTheme(adapted);
+      completed += 1;
+    }
+    setPanelStatus(root, `已批量生成并导入 ${completed} 款适配版；原主题均未修改。`, 'success');
+  } finally {
+    busy = false; setPanelActions(root, Boolean(selectedTheme)); refreshLibrary(root);
+  }
 }
 
 function renderRisks(root, risks) {
@@ -554,6 +575,11 @@ function openPanel(preferredDocument = null) {
       refreshLibrary(root);
       root.querySelector('.import-apply')?.focus();
     }
+  });
+
+  root.querySelector('.batch-import')?.addEventListener('click', async () => {
+    try { await batchImportThemes(root); }
+    catch (error) { busy = false; setPanelActions(root, Boolean(selectedTheme)); setPanelStatus(root, `批量导入失败：${error?.message || error}`, 'error'); }
   });
 
   root.querySelector('.download')?.addEventListener('click', () => {
