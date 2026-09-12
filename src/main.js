@@ -519,20 +519,39 @@ function openPanel(preferredDocument = null) {
     });
   }
   root.querySelector('.refresh').addEventListener('click', () => refreshLibrary(root));
-  root.querySelector('.batch-delete').addEventListener('click', async () => {
-    const visibleThemes = root.__visibleThemes || root.__installedThemes || [];
-    if (!visibleThemes.length) { setPanelStatus(root, '当前没有可删除的美化。', 'error'); return; }
-    const names = visibleThemes.map(theme => theme.name);
-    const preview = names.length > 6 ? `${names.slice(0, 6).join('、')} 等 ${names.length} 款` : names.join('、');
-    if (!resolveHostWindow().confirm(`确定彻底删除当前列表中的 ${names.length} 款美化吗？\n\n${preview}\n\n删除后无法恢复。`)) return;
-    busy = true; setPanelActions(root, false); setPanelStatus(root, `正在删除 ${names.length} 款美化…`);
-    try {
-      const count = await deleteInstalledThemes(resolveHostWindow(), names);
-      selectedTheme = null; selectedFileName = '';
-      setPanelStatus(root, `已彻底删除 ${count} 款美化，并已核对酒馆列表。`, 'success');
-      await refreshLibrary(root);
-    } catch (error) { setPanelStatus(root, `批量删除失败：${error?.message || error}`, 'error'); }
-    finally { busy = false; setPanelActions(root, Boolean(selectedTheme)); }
+  const bulkModal = root.querySelector('.bulk-modal');
+  const bulkList = root.querySelector('.bulk-list');
+  const bulkSearch = root.querySelector('.bulk-search-input');
+  const bulkCount = root.querySelector('.bulk-selected-count');
+  const closeBulk = () => { bulkModal.hidden = true; };
+  const renderBulkList = () => {
+    const query = bulkSearch.value.trim().toLocaleLowerCase();
+    const themes = (root.__installedThemes || []).filter(theme => theme.name.toLocaleLowerCase().includes(query));
+    bulkList.replaceChildren();
+    for (const theme of themes) {
+      const row = getHostDocument().createElement('label'); row.className = 'bulk-row';
+      const checkbox = getHostDocument().createElement('input'); checkbox.type = 'checkbox'; checkbox.value = theme.name; checkbox.checked = root.__bulkSelected?.has(theme.name) || false;
+      checkbox.addEventListener('change', () => { root.__bulkSelected ||= new Set(); checkbox.checked ? root.__bulkSelected.add(theme.name) : root.__bulkSelected.delete(theme.name); updateBulkCount(); });
+      const name = getHostDocument().createElement('span'); name.textContent = theme.name;
+      row.append(checkbox, name); bulkList.append(row);
+    }
+    if (!themes.length) { const empty = getHostDocument().createElement('p'); empty.className='bulk-empty'; empty.textContent='没有找到美化'; bulkList.append(empty); }
+    updateBulkCount();
+  };
+  const updateBulkCount = () => { const count = root.__bulkSelected?.size || 0; bulkCount.textContent = `已选 ${count} 款`; root.querySelector('.bulk-confirm-delete').disabled = !count || busy; };
+  root.querySelector('.batch-delete').addEventListener('click', () => { if (busy) return; root.__bulkSelected = new Set(); bulkSearch.value=''; bulkModal.hidden=false; renderBulkList(); bulkSearch.focus(); });
+  root.querySelector('.bulk-close').addEventListener('click', closeBulk);
+  root.querySelector('.bulk-cancel').addEventListener('click', closeBulk);
+  root.querySelector('.bulk-search-input').addEventListener('input', renderBulkList);
+  root.querySelector('.bulk-select-all').addEventListener('click', () => { root.__bulkSelected ||= new Set(); const visible=[...bulkList.querySelectorAll('input')]; const all=visible.length && visible.every(input=>input.checked); visible.forEach(input=>{input.checked=!all; input.checked?root.__bulkSelected.add(input.value):root.__bulkSelected.delete(input.value);}); updateBulkCount(); });
+  root.querySelector('.bulk-confirm-delete').addEventListener('click', async () => {
+    const names = [...(root.__bulkSelected || [])]; if (!names.length) return;
+    const preview = names.length > 8 ? `${names.slice(0,8).join('、')} 等 ${names.length} 款` : names.join('、');
+    if (!resolveHostWindow().confirm(`确定彻底删除已选的 ${names.length} 款美化吗？\n\n${preview}\n\n删除后无法恢复。`)) return;
+    busy=true; setPanelActions(root,false); setPanelStatus(root,`正在删除 ${names.length} 款美化…`);
+    try { const count=await deleteInstalledThemes(resolveHostWindow(),names); root.__bulkSelected=new Set(); selectedTheme=null; selectedFileName=''; closeBulk(); setPanelStatus(root,`已彻底删除 ${count} 款美化，并已核对酒馆列表。`,'success'); await refreshLibrary(root); }
+    catch(error){setPanelStatus(root,`批量删除失败：${error?.message||error}`,'error');}
+    finally{busy=false;setPanelActions(root,Boolean(selectedTheme));}
   });
   const searchToggle = root.querySelector('.search-toggle');
   const searchPanel = root.querySelector('.theme-search');
