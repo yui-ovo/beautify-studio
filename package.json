@@ -1,6 +1,6 @@
 {
   "name": "beautify-studio",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "private": true,
   "type": "module",
   "description": "美化工作室 · SillyTavern / TauriTavern UI 美化适配工具",
@@ -17,3 +17,4 @@
     "esbuild": "^0.25.0"
   }
 }
+

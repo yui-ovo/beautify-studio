@@ -746,6 +746,17 @@ function cleanup() {
   }
 }
 
+/**
+ * SillyTavern calls this lifecycle hook after replacing the extension files.
+ * Reloading here applies the new bundle immediately instead of leaving the
+ * user to close the manager and refresh the page manually.
+ */
+export function onUpdate() {
+  setTimeout(() => {
+    try { window.location.reload(); } catch (_) {}
+  }, 250);
+}
+
 function start() {
   /* Register the visible entry first, so a later compatibility error cannot hide the launcher. */
   startWandEntries();

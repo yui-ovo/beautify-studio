@@ -2,7 +2,7 @@ import { build } from 'esbuild';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { VERSION, BUTTON_NAME } from '../src/config.js';
 await mkdir('dist', { recursive: true });
-await build({ entryPoints:['src/main.js'], bundle:true, format:'iife', target:['safari15','chrome100'], loader:{'.css':'text'}, outfile:'dist/beautify-studio.js', charset:'utf8', legalComments:'none' });
+await build({ entryPoints:['src/main.js'], bundle:true, format:'esm', target:['safari15','chrome100'], loader:{'.css':'text'}, outfile:'dist/beautify-studio.js', charset:'utf8', legalComments:'none' });
 const content = await readFile('dist/beautify-studio.js', 'utf8');
 await writeFile('index.js', content);
 const script = {

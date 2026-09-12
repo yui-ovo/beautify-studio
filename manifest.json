@@ -4,8 +4,12 @@
   "requires": [],
   "optional": [],
   "js": "index.js",
+  "hooks": {
+    "update": "onUpdate"
+  },
   "css": "style.css",
   "author": "yui-ovo",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "homePage": "https://github.com/yui-ovo/beautify-studio"
 }
+
