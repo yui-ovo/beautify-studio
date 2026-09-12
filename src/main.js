@@ -539,7 +539,7 @@ function openPanel(preferredDocument = null) {
     updateBulkCount();
   };
   const updateBulkCount = () => { const count = root.__bulkSelected?.size || 0; bulkCount.textContent = `已选 ${count} 款`; root.querySelector('.bulk-confirm-delete').disabled = !count || busy; };
-  root.querySelector('.batch-delete').addEventListener('click', () => { if (busy) return; root.__bulkSelected = new Set(); bulkSearch.value=''; bulkModal.hidden=false; renderBulkList(); bulkSearch.focus(); });
+  root.querySelector('.batch-delete').addEventListener('click', () => { if (busy) return; root.__bulkSelected = new Set(); bulkSearch.value=''; bulkModal.hidden=false; renderBulkList(); });
   root.querySelector('.bulk-close').addEventListener('click', closeBulk);
   root.querySelector('.bulk-cancel').addEventListener('click', closeBulk);
   root.querySelector('.bulk-search-input').addEventListener('input', renderBulkList);
@@ -549,7 +549,13 @@ function openPanel(preferredDocument = null) {
     const preview = names.length > 8 ? `${names.slice(0,8).join('、')} 等 ${names.length} 款` : names.join('、');
     if (!resolveHostWindow().confirm(`确定彻底删除已选的 ${names.length} 款美化吗？\n\n${preview}\n\n删除后无法恢复。`)) return;
     busy=true; setPanelActions(root,false); setPanelStatus(root,`正在删除 ${names.length} 款美化…`);
-    try { const count=await deleteInstalledThemes(resolveHostWindow(),names); root.__bulkSelected=new Set(); selectedTheme=null; selectedFileName=''; closeBulk(); setPanelStatus(root,`已彻底删除 ${count} 款美化，并已核对酒馆列表。`,'success'); await refreshLibrary(root); }
+    try {
+      const hostWin = resolveHostWindow();
+      const count = await deleteInstalledThemes(hostWin, names);
+      root.__bulkSelected = new Set(); selectedTheme = null; selectedFileName = ''; closeBulk();
+      setPanelStatus(root, `已从酒馆储存删除 ${count} 款美化，正在刷新酒馆以同步主题列表…`, 'success');
+      hostWin.setTimeout(() => hostWin.location.reload(), 500);
+    }
     catch(error){setPanelStatus(root,`批量删除失败：${error?.message||error}`,'error');}
     finally{busy=false;setPanelActions(root,Boolean(selectedTheme));}
   });

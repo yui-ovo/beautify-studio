@@ -30,7 +30,10 @@ async function readHostSettings(host) {
 async function themeRequest(host, name) {
   const context = host.SillyTavern?.getContext?.();
   if (!context || typeof host.fetch !== 'function') throw new Error('未连接酒馆，请刷新后重试。');
-  const headers = typeof context.getRequestHeaders === 'function' ? context.getRequestHeaders() : {};
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(typeof context.getRequestHeaders === 'function' ? context.getRequestHeaders() : {}),
+  };
   const response = await host.fetch('/api/themes/delete', { method: 'POST', headers, body: JSON.stringify({ name }), credentials: 'same-origin' });
   if (!response.ok) throw new Error(`删除「${name}」失败（${response.status}）。`);
 }

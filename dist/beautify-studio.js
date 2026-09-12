@@ -1,5 +1,5 @@
 // src/config.js
-var VERSION = "1.0.6";
+var VERSION = "1.0.7";
 var BUTTON_NAME = "美化工作室";
 var STORAGE_KEY = "tt-theme-helper-options-v2";
 var OVERLAY_HOST_ID = "tt-theme-helper-overlay-host";
@@ -719,7 +719,10 @@ async function readHostSettings(host) {
 async function themeRequest(host, name) {
   const context = host.SillyTavern?.getContext?.();
   if (!context || typeof host.fetch !== "function") throw new Error("未连接酒馆，请刷新后重试。");
-  const headers = typeof context.getRequestHeaders === "function" ? context.getRequestHeaders() : {};
+  const headers = {
+    "Content-Type": "application/json",
+    ...typeof context.getRequestHeaders === "function" ? context.getRequestHeaders() : {}
+  };
   const response = await host.fetch("/api/themes/delete", { method: "POST", headers, body: JSON.stringify({ name }), credentials: "same-origin" });
   if (!response.ok) throw new Error(`删除「${name}」失败（${response.status}）。`);
 }
@@ -1321,7 +1324,6 @@ function openPanel(preferredDocument = null) {
     bulkSearch.value = "";
     bulkModal.hidden = false;
     renderBulkList();
-    bulkSearch.focus();
   });
   root.querySelector(".bulk-close").addEventListener("click", closeBulk);
   root.querySelector(".bulk-cancel").addEventListener("click", closeBulk);
@@ -1349,13 +1351,14 @@ ${preview}
     setPanelActions(root, false);
     setPanelStatus(root, `正在删除 ${names.length} 款美化…`);
     try {
-      const count = await deleteInstalledThemes(resolveHostWindow(), names);
+      const hostWin2 = resolveHostWindow();
+      const count = await deleteInstalledThemes(hostWin2, names);
       root.__bulkSelected = /* @__PURE__ */ new Set();
       selectedTheme = null;
       selectedFileName = "";
       closeBulk();
-      setPanelStatus(root, `已彻底删除 ${count} 款美化，并已核对酒馆列表。`, "success");
-      await refreshLibrary(root);
+      setPanelStatus(root, `已从酒馆储存删除 ${count} 款美化，正在刷新酒馆以同步主题列表…`, "success");
+      hostWin2.setTimeout(() => hostWin2.location.reload(), 500);
     } catch (error) {
       setPanelStatus(root, `批量删除失败：${error?.message || error}`, "error");
     } finally {

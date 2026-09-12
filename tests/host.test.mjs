@@ -31,10 +31,11 @@ test('deletes selected themes through the native endpoint and verifies removal',
   const remaining = [{name:'保留',custom_css:'keep'}];
   const calls = [];
   const h = {SillyTavern:{getContext:()=>({getRequestHeaders:()=>({'X-CSRF-Token':'test'})})},AbortController,setTimeout,clearTimeout,fetch:async(url,options)=>{
-    calls.push({url,body:options.body});
+    calls.push({url,body:options.body,headers:options.headers});
     if(url==='/api/themes/delete') { const name=JSON.parse(options.body).name; const index=remaining.findIndex(t=>t.name===name); if(index>=0) remaining.splice(index,1); return new Response('',{status:200}); }
     return new Response(JSON.stringify({themes:remaining}),{status:200});
   }};
   assert.equal(await deleteInstalledThemes(h,['删掉','删掉']),1);
   assert.deepEqual(calls.filter(x=>x.url==='/api/themes/delete').map(x=>JSON.parse(x.body).name),['删掉']);
+  assert.equal(calls.find(x=>x.url==='/api/themes/delete').headers['Content-Type'],'application/json');
 });

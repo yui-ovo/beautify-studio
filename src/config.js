@@ -1,4 +1,4 @@
-export const VERSION = '1.0.6';
+export const VERSION = '1.0.7';
 export const BUTTON_NAME = '美化工作室';
 export const STORAGE_KEY = 'tt-theme-helper-options-v2';
 export const OVERLAY_HOST_ID = 'tt-theme-helper-overlay-host';
