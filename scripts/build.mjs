@@ -4,6 +4,7 @@ import { VERSION, BUTTON_NAME } from '../src/config.js';
 await mkdir('dist', { recursive: true });
 await build({ entryPoints:['src/main.js'], bundle:true, format:'iife', target:['safari15','chrome100'], loader:{'.css':'text'}, outfile:'dist/beautify-studio.js', charset:'utf8', legalComments:'none' });
 const content = await readFile('dist/beautify-studio.js', 'utf8');
+await writeFile('index.js', content);
 const script = {
   type:'script', enabled:true, name:`美化工作室 v${VERSION}`,
   id:'5c0e113d-ff11-4e74-937d-89791301b43e',

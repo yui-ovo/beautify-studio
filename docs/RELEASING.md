@@ -25,4 +25,4 @@ git push origin v1.0.0
 
 CI 在 push / pull_request 上运行测试与构建。`v*` 标签触发 Release 工作流，验证标签与源码版本一致，附上 `美化工作室.json`、JS 文件和完整项目 ZIP。
 
-Release 标注这是“酒馆助手全局脚本”，说明先停用旧版。最终用户只需下载 JSON，无需安装 Node.js。
+Release 标注这是“标准 SillyTavern 扩展”，说明先停用旧版全局脚本。最终用户可直接粘贴 GitHub 仓库 URL 安装；旧版酒馆助手用户也可下载 JSON，无需安装 Node.js。

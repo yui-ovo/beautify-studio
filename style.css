@@ -1,0 +1,3 @@
+/* 美化工作室 uses Shadow DOM for its panel. This file keeps the extension
+   manifest complete and provides a small, harmless launcher reset. */
+#tt-theme-helper-wand-entry { cursor: pointer; }
