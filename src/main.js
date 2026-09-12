@@ -2,7 +2,7 @@ import { downloadLayoutDiagnostic } from './host/diagnostics.js';
 import { VERSION, BUTTON_NAME, STORAGE_KEY, OVERLAY_HOST_ID, RUNTIME_STYLE_ID, WAND_ENTRY_ID, TAURI_ROOT_CLASS, COMPOSER_OPEN_CLASS, DEFAULT_OPTIONS, PATCH_START } from './config.js';
 import { adaptTheme, analyzeCss } from './core/adapter.js';
 import { validateTheme } from './core/validation.js';
-import { readInstalledThemes, verifySavedTheme } from './host/themes.js';
+import { readInstalledThemes, verifySavedTheme, deleteInstalledThemes } from './host/themes.js';
 import { panelMarkup } from './ui/markup.js';
 import PANEL_CSS from './ui/studio.css';
 let selectedTheme = null;
@@ -304,6 +304,7 @@ function setPanelActions(root, enabled) {
   for (const button of root.querySelectorAll('.needs-theme')) button.disabled = !enabled || busy;
   for (const control of root.querySelectorAll('.theme-card, [data-source], [data-option], .choose, .refresh')) control.disabled = busy;
   root.querySelector('.batch-import').disabled = busy;
+  root.querySelector('.batch-delete').disabled = busy;
   if (!getThemeSelect() || !getHostDocument().getElementById('ui_preset_import_file')) root.querySelector('.import-apply').disabled = true;
 }
 
@@ -455,6 +456,7 @@ function createThemeThumbnail(theme) {
 
 function renderThemeCards(root, themes) {
   const library = root.querySelector('.library');
+  root.__visibleThemes = themes;
   library.replaceChildren();
   if (!themes.length) {
     const empty = getHostDocument().createElement('div'); empty.className = 'library-empty'; empty.textContent = '没有找到对应美化'; library.append(empty); return;
@@ -517,6 +519,21 @@ function openPanel(preferredDocument = null) {
     });
   }
   root.querySelector('.refresh').addEventListener('click', () => refreshLibrary(root));
+  root.querySelector('.batch-delete').addEventListener('click', async () => {
+    const visibleThemes = root.__visibleThemes || root.__installedThemes || [];
+    if (!visibleThemes.length) { setPanelStatus(root, '当前没有可删除的美化。', 'error'); return; }
+    const names = visibleThemes.map(theme => theme.name);
+    const preview = names.length > 6 ? `${names.slice(0, 6).join('、')} 等 ${names.length} 款` : names.join('、');
+    if (!resolveHostWindow().confirm(`确定彻底删除当前列表中的 ${names.length} 款美化吗？\n\n${preview}\n\n删除后无法恢复。`)) return;
+    busy = true; setPanelActions(root, false); setPanelStatus(root, `正在删除 ${names.length} 款美化…`);
+    try {
+      const count = await deleteInstalledThemes(resolveHostWindow(), names);
+      selectedTheme = null; selectedFileName = '';
+      setPanelStatus(root, `已彻底删除 ${count} 款美化，并已核对酒馆列表。`, 'success');
+      await refreshLibrary(root);
+    } catch (error) { setPanelStatus(root, `批量删除失败：${error?.message || error}`, 'error'); }
+    finally { busy = false; setPanelActions(root, Boolean(selectedTheme)); }
+  });
   const searchToggle = root.querySelector('.search-toggle');
   const searchPanel = root.querySelector('.theme-search');
   const searchInput = root.querySelector('.search-input');

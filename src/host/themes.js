@@ -27,6 +27,14 @@ async function readHostSettings(host) {
   } finally { host.clearTimeout(timer); }
 }
 
+async function themeRequest(host, name) {
+  const context = host.SillyTavern?.getContext?.();
+  if (!context || typeof host.fetch !== 'function') throw new Error('未连接酒馆，请刷新后重试。');
+  const headers = typeof context.getRequestHeaders === 'function' ? context.getRequestHeaders() : {};
+  const response = await host.fetch('/api/themes/delete', { method: 'POST', headers, body: JSON.stringify({ name }), credentials: 'same-origin' });
+  if (!response.ok) throw new Error(`删除「${name}」失败（${response.status}）。`);
+}
+
 export async function readInstalledThemes(host) {
   const { themes } = await readHostSettings(host);
   if (!Array.isArray(themes)) throw new Error('当前酒馆未返回美化列表，请使用 JSON 导入。');
@@ -42,4 +50,14 @@ export async function readInstalledThemes(host) {
 export async function verifySavedTheme(host, theme) {
   const themes = await readInstalledThemes(host);
   return themes.some(item => item.name === theme.name && item.custom_css === theme.custom_css);
+}
+
+export async function deleteInstalledThemes(host, names) {
+  const uniqueNames = [...new Set(names.filter(name => typeof name === 'string' && name.trim()))];
+  for (const name of uniqueNames) await themeRequest(host, name);
+  const remaining = await readInstalledThemes(host);
+  const stillThere = new Set(remaining.map(theme => theme.name));
+  const failed = uniqueNames.filter(name => stillThere.has(name));
+  if (failed.length) throw new Error(`有 ${failed.length} 款美化删除后仍在列表中：${failed.join('、')}`);
+  return uniqueNames.length;
 }
