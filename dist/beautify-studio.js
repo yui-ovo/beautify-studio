@@ -4150,7 +4150,7 @@ var require_postcss = __commonJS({
 });
 
 // src/config.js
-var VERSION = "1.2.0";
+var VERSION = "1.3.0";
 var BUTTON_NAME = "美化工作室";
 var STORAGE_KEY = "tt-theme-helper-options-v2";
 var OVERLAY_HOST_ID = "tt-theme-helper-overlay-host";
@@ -4894,6 +4894,36 @@ async function verifySavedTheme(host, theme) {
   const themes = await readInstalledThemes(host);
   return themes.some((item) => item.name === theme.name && item.custom_css === theme.custom_css);
 }
+async function updateActiveThemeCss(host, theme, expectedCss) {
+  const doc = host.document;
+  const select = doc?.getElementById("themes");
+  const input = doc?.getElementById("customCSS");
+  const update = doc?.getElementById("ui-preset-update-button");
+  const style = doc?.getElementById("custom-style");
+  if (!select || !input || !update || !style) throw new Error("没有找到原生美化保存控件，请打开一次酒馆的用户设置后重试。");
+  const checkActive = () => {
+    if (select.value !== theme.name) throw new Error("当前美化已切换，已停止保存，请重新打开微调。");
+  };
+  checkActive();
+  const themes = await readInstalledThemes(host);
+  if (!themes.some((item) => item.name === theme.name)) throw new Error("原美化已经不存在，请刷新美化列表。");
+  checkActive();
+  if (expectedCss !== void 0 && style.textContent !== expectedCss) throw new Error("当前美化已被其他操作修改，请重新打开后再保存。");
+  input.value = theme.custom_css;
+  input.dispatchEvent(new host.Event("input", { bubbles: true }));
+  checkActive();
+  if (style.textContent !== theme.custom_css) throw new Error("酒馆未接收 CSS 修改，请刷新后重试。");
+  update.click();
+  for (let attempt = 0; attempt < 16; attempt += 1) {
+    await new Promise((resolve) => host.setTimeout(resolve, 250));
+    checkActive();
+    if (await verifySavedTheme(host, theme)) {
+      if (style.textContent !== theme.custom_css) throw new Error("保存期间 CSS 被其他操作修改，请刷新核对。");
+      return theme;
+    }
+  }
+  throw new Error("当前 CSS 已应用，但未核实原美化保存；请检查连接后重新保存或导出 JSON。");
+}
 async function deleteInstalledThemes(host, names) {
   const uniqueNames = [...new Set(names.filter((name) => typeof name === "string" && name.trim()))];
   for (const name of uniqueNames) await themeRequest(host, name);
@@ -4936,13 +4966,13 @@ function panelMarkup(detected) {
             <label class="option"><span class="option-number">02</span><span><b>保持隐藏按钮的状态</b><small>防止美化让已经隐藏的按钮重新出现。</small></span><input data-option="preserveHiddenControls" type="checkbox" role="switch" aria-label="保持隐藏按钮的状态"></label>
             <label class="option"><span class="option-number">03</span><span><b>修复布局冲突</b><small>适配聊天区域、顶部抽屉与悬浮输入栏。</small></span><input data-option="mobileGeometry" type="checkbox" role="switch" aria-label="修复布局冲突"></label>
             <label class="option"><span class="option-number">04</span><span><b>段落首行缩进</b><small>给聊天内容的每个段落增加 2em 首行缩进。</small></span><input data-option="indentParagraphs" type="checkbox" role="switch" aria-label="段落首行缩进"></label>
-          </div><div class="settings-note"><span>♡</span> 保留原来的美化，所有调整写入新副本。</div></div>
+          </div><div class="settings-note"><span>♡</span> 可另存副本，也可直接注入所选原美化。</div></div>
           <div class="check-card"><div class="check-heading"><h3>${star} 兼容检查</h3><span class="check-count">等待选择</span></div><div class="report"><div class="risk" data-level="idle"><b>好看的开始，从选择开始</b><span>选择一款美化后，在这里查看适配建议。</span></div></div></div>
           </section>
         </div>
         <div class="bulk-modal" hidden role="dialog" aria-modal="true" aria-labelledby="bulk-title"><div class="bulk-modal-card"><div class="bulk-modal-header"><div><span class="eyebrow">THEME LIBRARY</span><h2 id="bulk-title">管理酒馆美化</h2></div><button class="bulk-close icon-button" type="button" aria-label="关闭批量管理">×</button></div><div class="bulk-toolbar"><label class="bulk-search"><span class="sr-only">搜索美化名称</span><span>⌕</span><input type="search" class="bulk-search-input" placeholder="搜索美化名称…" autocomplete="off"></label><button class="bulk-select-all text-button" type="button">全选</button></div><div class="bulk-list" role="group" aria-label="可删除的美化"></div><div class="bulk-footer"><span class="bulk-selected-count">已选 0 款</span><div><button class="bulk-cancel action" type="button">取消</button><button class="bulk-confirm-delete action danger-button" type="button" disabled>删除已选</button></div></div></div></div>
-        <footer class="actions"><div class="action-buttons"><button class="action primary import-apply needs-theme" type="button" disabled>生成并应用 ${arrow}</button><div class="secondary-actions"><button class="action batch-import needs-host" type="button">批量生成并导入</button><button class="action download needs-theme" type="button" disabled>↓ 仅下载适配版</button><button class="action diagnose" type="button">布局诊断 ↗</button></div></div></footer>
-        <div class="status" role="status" aria-live="polite">选择美化后即可开始。原主题会完整保留。</div>
+        <footer class="actions"><div class="action-buttons"><button class="action primary import-apply needs-theme" type="button" disabled>生成副本并应用 ${arrow}</button><div class="secondary-actions"><button class="action inject-original needs-theme" type="button" disabled>直接注入原美化</button><button class="action download needs-theme" type="button" disabled>↓ 仅下载适配版</button><button class="action diagnose" type="button">布局诊断 ↗</button></div></div></footer>
+        <div class="status" role="status" aria-live="polite">选择美化后即可开始；直接注入会更新所选原美化。</div>
         <div class="colophon"><span>BEAUTIFY STUDIO</span><span>WITH A LITTLE ${star} & A LOT OF CARE</span><span>美化工作室</span></div>
       </div>
     </section>
@@ -5144,6 +5174,9 @@ h3 { font-size:15px; font-weight:600; }
 /* Compact heading and consistent curved undo/redo icons. */
 .ve-sheet-head{align-items:center;padding-bottom:10px}.ve-sheet-head .ve-icon{display:grid;place-items:center}.ve-footer-actions .ve-icon,.ve-controller-foot [data-action="undo"]{display:grid;place-items:center;border-radius:50%!important}.visual-editor .ve-history-icon{width:21px;height:21px;display:block}.ve-controller-foot .ve-history-icon{width:17px;height:17px}.ve-composer-target{grid-column:1/-1;display:grid;grid-template-columns:30px 1fr;column-gap:9px;align-items:center}.ve-targets .ve-composer-target>span{grid-row:1/3;margin:0;font-size:23px}.ve-composer-target b,.ve-composer-target small{grid-column:2}.ve-properties[data-composer="true"]{grid-template-columns:repeat(2,1fr)}.ve-lift-buttons{display:flex;gap:7px;margin-bottom:12px}.ve-lift-buttons button{flex:1;border:1px solid #d6dfcc;border-radius:9px;padding:9px 5px;background:#edf2e6;font-size:12px}.ve-lift-buttons button:nth-child(2){flex:0 0 35px}.ve-controller[data-composer="true"]{bottom:auto;top:85px}.ve-controller[data-composer="true"] .ve-controller-caption{line-height:1.7}.ve-sheet-head .ve-eyebrow{font-size:10px}.ve-help{font-size:11px}.ve-history-icon path{pointer-events:none}
 @media(max-width:700px){.ve-targets .ve-composer-target small{display:block}.ve-sheet-head{padding:12px 18px 9px}.ve-controller[data-composer="true"]{top:65px;bottom:auto}.ve-sheet-head .ve-icon{height:25px}}
+
+/* Explicit centering overrides native iOS button padding and font baselines. */
+.visual-editor [data-nudge],.visual-editor [data-action="undo"],.visual-editor [data-action="redo"]{display:flex!important;align-items:center!important;justify-content:center!important;padding:0!important;line-height:1!important;text-indent:0!important;box-sizing:border-box!important;appearance:none;-webkit-appearance:none;flex-shrink:0}.visual-editor .ve-step-icon,.visual-editor .ve-history-icon{display:block!important;width:22px!important;height:22px!important;margin:0!important;flex:0 0 22px;position:static!important}.ve-controller-foot [data-action="undo"]{width:32px;height:32px}.ve-footer-actions .ve-save{font-size:11px!important}
 `;
 
 // node_modules/postcss/lib/postcss.mjs
@@ -5272,6 +5305,7 @@ function createHistory(initial) {
 }
 
 // src/ui/editor-markup.js
+var stepIcon = (plus = false) => `<svg class="ve-step-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 12h12${plus ? "M12 6v12" : ""}" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
 var historyIcon = (redo = false) => `<svg class="ve-history-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"${redo ? ' style="transform:scaleX(-1)"' : ""}><path d="M4 10a8 8 0 1 1 2 9M4 4v6h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 function editorMarkup() {
   return `<div class="visual-editor">
@@ -5289,16 +5323,16 @@ function editorMarkup() {
           <p class="ve-scope">作用于全部角色消息 <button class="ve-text" data-action="locate">定位 ↗</button></p>
           <div class="ve-section-label"><span>02 / 想调整什么</span><span class="ve-dim">所见即所得</span></div>
           <div class="ve-properties"><button data-mode="position" aria-pressed="false">✥<span>位置</span></button><button data-mode="size" aria-pressed="false">↗<span>大小</span></button><button data-mode="radius" aria-pressed="true">▢<span>圆角</span></button><button data-mode="border" aria-pressed="false">◉<span>边框</span></button><button data-mode="lift" hidden>↕<span>上下位置</span></button><button data-mode="gap" hidden>▥<span>底部留白</span></button></div>
-          <div class="ve-value-card"><div class="ve-value-title"><b class="ve-property-title">头像圆角</b><span class="ve-unit">PX</span></div><div class="ve-scalar"><button data-nudge="minus" aria-label="减小数值">−</button><label><input class="ve-number" type="number" min="0" max="100" step="1" aria-label="当前数值"><span>px</span></label><button data-nudge="plus" aria-label="增大数值">＋</button></div><div class="ve-position-values" hidden><label>水平 X<input class="ve-x" type="number" min="-300" max="300" aria-label="水平偏移"></label><label>垂直 Y<input class="ve-y" type="number" min="-300" max="300" aria-label="垂直偏移"></label></div><input class="ve-range" type="range" min="0" max="100" aria-label="拖动调整数值"><label class="ve-color-row" hidden>边框颜色<input class="ve-color" type="color" value="#727c73" aria-label="边框颜色"></label><p class="ve-help">数值越大，头像的边角越圆。</p></div>
+          <div class="ve-value-card"><div class="ve-value-title"><b class="ve-property-title">头像圆角</b><span class="ve-unit">PX</span></div><div class="ve-scalar"><button data-nudge="minus" aria-label="减小数值">${stepIcon()}</button><label><input class="ve-number" type="number" min="0" max="100" step="1" aria-label="当前数值"><span>px</span></label><button data-nudge="plus" aria-label="增大数值">${stepIcon(true)}</button></div><div class="ve-position-values" hidden><label>水平 X<input class="ve-x" type="number" min="-300" max="300" aria-label="水平偏移"></label><label>垂直 Y<input class="ve-y" type="number" min="-300" max="300" aria-label="垂直偏移"></label></div><input class="ve-range" type="range" min="0" max="100" aria-label="拖动调整数值"><label class="ve-color-row" hidden>边框颜色<input class="ve-color" type="color" value="#727c73" aria-label="边框颜色"></label><p class="ve-help">数值越大，头像的边角越圆。</p></div>
           <button class="ve-handheld" data-action="compact"><span>✥</span><div><b>打开微调手柄</b><small>收起面板，留更多空间看效果</small></div><span>↗</span></button>
           <div class="ve-coming"><span>接下来</span> 顶栏 · 消息气泡 <small>逐步开放</small></div>
         </div>
         <div data-page="notes" hidden><p class="ve-description">美化作者写在 CSS 里的小提示，都收在这里。</p><label class="ve-search"><span>⌕</span><input type="search" placeholder="搜索说明，比如：头像、颜色…" aria-label="搜索作者说明"></label><div class="ve-notes"></div></div>
-        <div data-page="changes" hidden><p class="ve-description">每次调整都有迹可循。保存时生成独立副本。</p><div class="ve-changes"></div><button class="ve-reset-all" data-action="reset-all">还原全部调整</button></div>
+        <div data-page="changes" hidden><p class="ve-description">每次调整都有迹可循。保存时写入当前美化。</p><div class="ve-changes"></div><button class="ve-reset-all" data-action="reset-all">还原全部调整</button></div>
       </div>
-      <footer class="ve-footer"><div class="ve-feedback" role="status" aria-live="polite">试着把圆角加 1，看看头像的变化。</div><div class="ve-footer-actions"><button class="ve-icon" data-action="undo" aria-label="撤销">${historyIcon()}</button><button class="ve-icon" data-action="redo" aria-label="重做">${historyIcon(true)}</button><button class="ve-export" data-action="download">导出 JSON</button><button class="ve-save" data-action="save">保存副本 ↗</button></div><small>原美化保留 · 关闭时恢复 · 本机处理</small></footer>
+      <footer class="ve-footer"><div class="ve-feedback" role="status" aria-live="polite">试着把圆角加 1，看看头像的变化。</div><div class="ve-footer-actions"><button class="ve-icon" data-action="undo" aria-label="撤销">${historyIcon()}</button><button class="ve-icon" data-action="redo" aria-label="重做">${historyIcon(true)}</button><button class="ve-export" data-action="download">导出 JSON</button><button class="ve-save" data-action="save">保存当前美化</button></div><small>保存到原美化 · 未保存可关闭恢复</small></footer>
     </section>
-    <section class="ve-controller" aria-label="微调手柄" hidden><div class="ve-controller-head"><span class="ve-grip" title="拖动手柄">⠿</span><b class="ve-controller-title">角色头像 · 圆角</b><button class="ve-text" data-action="expand">展开 ↗</button></div><div class="ve-mini-modes"><button data-mode="position">位置</button><button data-mode="size">大小</button><button data-mode="radius">圆角</button><button data-mode="border">边框</button><button data-mode="lift" hidden>上下位置</button><button data-mode="gap" hidden>底部留白</button></div><div class="ve-controller-body"><div class="ve-lift-buttons" hidden><button data-lift="up" aria-label="抬高底栏">↑ 抬高</button><button data-action="reset-mode" aria-label="还原底栏位置">◎</button><button data-lift="down" aria-label="降低底栏">↓ 降低</button></div><div class="ve-dpad"><button data-direction="up" aria-label="向上移动">↑</button><button data-direction="left" aria-label="向左移动">←</button><button data-action="reset-mode" aria-label="还原当前调整项">◎</button><button data-direction="right" aria-label="向右移动">→</button><button data-direction="down" aria-label="向下移动">↓</button></div><div class="ve-controller-scalar"><button data-nudge="minus" aria-label="手柄减小数值">−</button><span><b class="ve-mini-value">6</b><small>px</small></span><button data-nudge="plus" aria-label="手柄增大数值">＋</button></div><div class="ve-controller-caption">圆角越大，边角越圆</div></div><div class="ve-controller-foot"><span>步长</span><button data-step="1" aria-pressed="true">1 px</button><button data-step="5" aria-pressed="false">5 px</button><button data-action="undo" aria-label="手柄撤销">${historyIcon()}</button><button class="ve-done" data-action="expand">完成</button></div><div class="ve-mini-status" role="status" aria-live="polite"></div></section>
+    <section class="ve-controller" aria-label="微调手柄" hidden><div class="ve-controller-head"><span class="ve-grip" title="拖动手柄">⠿</span><b class="ve-controller-title">角色头像 · 圆角</b><button class="ve-text" data-action="expand">展开 ↗</button></div><div class="ve-mini-modes"><button data-mode="position">位置</button><button data-mode="size">大小</button><button data-mode="radius">圆角</button><button data-mode="border">边框</button><button data-mode="lift" hidden>上下位置</button><button data-mode="gap" hidden>底部留白</button></div><div class="ve-controller-body"><div class="ve-lift-buttons" hidden><button data-lift="up" aria-label="抬高底栏">↑ 抬高</button><button data-action="reset-mode" aria-label="还原底栏位置">◎</button><button data-lift="down" aria-label="降低底栏">↓ 降低</button></div><div class="ve-dpad"><button data-direction="up" aria-label="向上移动">↑</button><button data-direction="left" aria-label="向左移动">←</button><button data-action="reset-mode" aria-label="还原当前调整项">◎</button><button data-direction="right" aria-label="向右移动">→</button><button data-direction="down" aria-label="向下移动">↓</button></div><div class="ve-controller-scalar"><button data-nudge="minus" aria-label="手柄减小数值">${stepIcon()}</button><span><b class="ve-mini-value">6</b><small>px</small></span><button data-nudge="plus" aria-label="手柄增大数值">${stepIcon(true)}</button></div><div class="ve-controller-caption">圆角越大，边角越圆</div></div><div class="ve-controller-foot"><span>步长</span><button data-step="1" aria-pressed="true">1 px</button><button data-step="5" aria-pressed="false">5 px</button><button data-action="undo" aria-label="手柄撤销">${historyIcon()}</button><button class="ve-done" data-action="expand">完成</button></div><div class="ve-mini-status" role="status" aria-live="polite"></div></section>
   </div>`;
 }
 
@@ -5607,7 +5641,7 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
     feedback(message);
   }
   function makeTheme() {
-    return { ...JSON.parse(JSON.stringify(theme)), custom_css: draft, name: `${theme.name} · 我的微调` };
+    return { ...JSON.parse(JSON.stringify(theme)), custom_css: draft, name: theme.name };
   }
   function endHold() {
     hostWin.clearTimeout(heldTimer);
@@ -5655,14 +5689,14 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
       saving = true;
       endHold();
       render();
-      feedback("正在通过酒馆保存副本…");
+      feedback("正在保存到当前美化…");
       observer.disconnect();
       previewStyle.textContent = "";
       host.style.setProperty("display", "none", "important");
       try {
-        await onSave(result);
+        await onSave(result, original);
         dispose(false);
-        onClose(`已保存并应用「${result.name}」。`);
+        onClose(`已保存到当前美化「${result.name}」。`);
       } catch (error) {
         saving = false;
         host.style.removeProperty("display");
@@ -5671,7 +5705,7 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
           observer.observe(nativeStyle, { childList: true, characterData: true, subtree: true });
         } else {
           dispose(false);
-          onClose(`保存未核实：${error.message}。请在美化库检查副本。`);
+          onClose(`保存未核实：${error.message}。请在美化库检查原美化。`);
           return;
         }
         render();
@@ -6081,31 +6115,9 @@ function setPanelStatus(root2, text, kind = "info") {
 function setPanelActions(root2, enabled) {
   for (const button of root2.querySelectorAll(".needs-theme")) button.disabled = !enabled || busy;
   for (const control of root2.querySelectorAll(".theme-card, [data-source], [data-option], .choose, .refresh")) control.disabled = busy;
-  root2.querySelector(".batch-import").disabled = busy;
+  root2.querySelector(".inject-original").disabled = busy || !enabled || selectedFileName !== "酒馆内的美化";
   root2.querySelector(".batch-delete").disabled = busy;
   if (!getThemeSelect() || !getHostDocument().getElementById("ui_preset_import_file")) root2.querySelector(".import-apply").disabled = true;
-}
-async function batchImportThemes(root2) {
-  if (busy) return;
-  const themes = root2.__installedThemes || await readInstalledThemes(resolveHostWindow());
-  if (!themes.length) throw new Error("没有可批量处理的已导入美化。");
-  busy = true;
-  setPanelActions(root2, false);
-  let completed = 0;
-  try {
-    for (const source of themes) {
-      const adapted = adaptTheme(source, options);
-      adapted.name = getUniqueThemeName(adapted.name);
-      setPanelStatus(root2, `正在导入 ${completed + 1}/${themes.length}：${adapted.name}…`);
-      await importAndApplyTheme(adapted);
-      completed += 1;
-    }
-    setPanelStatus(root2, `已批量生成并导入 ${completed} 款适配版；原主题均未修改。`, "success");
-  } finally {
-    busy = false;
-    setPanelActions(root2, Boolean(selectedTheme));
-    refreshLibrary(root2);
-  }
 }
 function renderRisks(root2, risks) {
   const report = root2.querySelector(".report");
@@ -6254,7 +6266,7 @@ function renderThemeCards(root2, themes) {
       selectedFileName = "酒馆内的美化";
       for (const card of library.querySelectorAll(".theme-card")) card.setAttribute("aria-pressed", String(card === button));
       syncPanelFromState(root2);
-      setPanelStatus(root2, `已选择「${theme.name}」。生成时会创建独立的 TT 适配副本。`, "success");
+      setPanelStatus(root2, `已选择「${theme.name}」。可以生成副本，或直接注入所选原美化。`, "success");
     });
     library.append(button);
   }
@@ -6300,11 +6312,7 @@ function openPanel(preferredDocument = null) {
         hostWin,
         theme,
         onDownload: downloadTheme,
-        onSave: async (edited) => {
-          edited.name = getUniqueThemeName(edited.name);
-          await importAndApplyTheme(edited);
-          if (!await verifySavedTheme(hostWin, edited)) throw new Error("未能核实副本已保存");
-        },
+        onSave: (edited, originalCss) => updateActiveThemeCss(hostWin, edited, originalCss),
         onClose: (message) => {
           closeVisualEditor = null;
           host.style.setProperty("display", "block", "important");
@@ -6480,13 +6488,35 @@ ${preview}
       root2.querySelector(".import-apply")?.focus();
     }
   });
-  root2.querySelector(".batch-import")?.addEventListener("click", async () => {
+  root2.querySelector(".inject-original")?.addEventListener("click", async () => {
+    if (busy || !selectedTheme || selectedFileName !== "酒馆内的美化") return;
+    busy = true;
+    setPanelActions(root2, false);
     try {
-      await batchImportThemes(root2);
+      const name = selectedTheme.name;
+      const installed = await readInstalledThemes(hostWin);
+      const fresh = installed.find((item) => item.name === name);
+      if (!fresh) throw new Error("所选美化已不存在，请刷新列表。");
+      const select = getThemeSelect(doc);
+      if (!select) throw new Error("没有找到酒馆主题切换控件。");
+      if (select.value !== name) {
+        select.value = name;
+        select.dispatchEvent(new hostWin.Event("change", { bubbles: true }));
+        await waitForHostCondition(hostWin, () => select.value === name && doc.getElementById("custom-style")?.textContent === (fresh.custom_css || ""));
+      }
+      const originalCss = doc.getElementById("custom-style")?.textContent || "";
+      const edited = adaptTheme({ ...fresh, custom_css: originalCss }, options);
+      edited.name = name;
+      setPanelStatus(root2, `正在注入并保存原美化「${name}」…`);
+      await updateActiveThemeCss(hostWin, edited, originalCss);
+      selectedTheme = { ...fresh, custom_css: edited.custom_css };
+      setPanelStatus(root2, `已直接注入并保存「${name}」，名称不变。`, "success");
     } catch (error) {
+      setPanelStatus(root2, `注入未完成：${error.message}`, "error");
+    } finally {
       busy = false;
       setPanelActions(root2, Boolean(selectedTheme));
-      setPanelStatus(root2, `批量导入失败：${error?.message || error}`, "error");
+      refreshLibrary(root2);
     }
   });
   root2.querySelector(".download")?.addEventListener("click", () => {

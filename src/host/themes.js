@@ -55,6 +55,41 @@ export async function verifySavedTheme(host, theme) {
   return themes.some(item => item.name === theme.name && item.custom_css === theme.custom_css);
 }
 
+// Use the native input and update button so the saved preset, in-memory theme
+// library, and active power_user settings all change together on ST and TT.
+export async function updateActiveThemeCss(host, theme, expectedCss) {
+  const doc = host.document;
+  const select = doc?.getElementById('themes');
+  const input = doc?.getElementById('customCSS');
+  const update = doc?.getElementById('ui-preset-update-button');
+  const style = doc?.getElementById('custom-style');
+  if (!select || !input || !update || !style) throw new Error('没有找到原生美化保存控件，请打开一次酒馆的用户设置后重试。');
+  const checkActive = () => {
+    if (select.value !== theme.name) throw new Error('当前美化已切换，已停止保存，请重新打开微调。');
+  };
+  checkActive();
+  const themes = await readInstalledThemes(host);
+  if (!themes.some(item => item.name === theme.name)) throw new Error('原美化已经不存在，请刷新美化列表。');
+  checkActive();
+  if (expectedCss !== undefined && style.textContent !== expectedCss) throw new Error('当前美化已被其他操作修改，请重新打开后再保存。');
+  input.value = theme.custom_css;
+  input.dispatchEvent(new host.Event('input', { bubbles: true }));
+  checkActive();
+  if (style.textContent !== theme.custom_css) throw new Error('酒馆未接收 CSS 修改，请刷新后重试。');
+  update.click();
+  // Native save updates the theme library only after the server acknowledges it.
+  // Verify the persisted preset; a visible style change alone is insufficient.
+  for (let attempt = 0; attempt < 16; attempt += 1) {
+    await new Promise(resolve => host.setTimeout(resolve, 250));
+    checkActive();
+    if (await verifySavedTheme(host, theme)) {
+      if (style.textContent !== theme.custom_css) throw new Error('保存期间 CSS 被其他操作修改，请刷新核对。');
+      return theme;
+    }
+  }
+  throw new Error('当前 CSS 已应用，但未核实原美化保存；请检查连接后重新保存或导出 JSON。');
+}
+
 export async function deleteInstalledThemes(host, names) {
   const uniqueNames = [...new Set(names.filter(name => typeof name === 'string' && name.trim()))];
   for (const name of uniqueNames) await themeRequest(host, name);

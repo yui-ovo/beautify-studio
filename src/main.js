@@ -2,7 +2,7 @@ import { downloadLayoutDiagnostic } from './host/diagnostics.js';
 import { VERSION, BUTTON_NAME, STORAGE_KEY, OVERLAY_HOST_ID, RUNTIME_STYLE_ID, WAND_ENTRY_ID, TAURI_ROOT_CLASS, COMPOSER_OPEN_CLASS, DEFAULT_OPTIONS, PATCH_START } from './config.js';
 import { adaptTheme, analyzeCss } from './core/adapter.js';
 import { validateTheme } from './core/validation.js';
-import { readInstalledThemes, verifySavedTheme, deleteInstalledThemes } from './host/themes.js';
+import { readInstalledThemes, verifySavedTheme, deleteInstalledThemes, updateActiveThemeCss } from './host/themes.js';
 import { panelMarkup } from './ui/markup.js';
 import PANEL_CSS from './ui/studio.css';
 import { openVisualEditor } from './host/visual-editor.js';
@@ -305,30 +305,11 @@ function setPanelStatus(root, text, kind = 'info') {
 function setPanelActions(root, enabled) {
   for (const button of root.querySelectorAll('.needs-theme')) button.disabled = !enabled || busy;
   for (const control of root.querySelectorAll('.theme-card, [data-source], [data-option], .choose, .refresh')) control.disabled = busy;
-  root.querySelector('.batch-import').disabled = busy;
+  root.querySelector('.inject-original').disabled = busy || !enabled || selectedFileName !== '酒馆内的美化';
   root.querySelector('.batch-delete').disabled = busy;
   if (!getThemeSelect() || !getHostDocument().getElementById('ui_preset_import_file')) root.querySelector('.import-apply').disabled = true;
 }
 
-async function batchImportThemes(root) {
-  if (busy) return;
-  const themes = root.__installedThemes || await readInstalledThemes(resolveHostWindow());
-  if (!themes.length) throw new Error('没有可批量处理的已导入美化。');
-  busy = true; setPanelActions(root, false);
-  let completed = 0;
-  try {
-    for (const source of themes) {
-      const adapted = adaptTheme(source, options);
-      adapted.name = getUniqueThemeName(adapted.name);
-      setPanelStatus(root, `正在导入 ${completed + 1}/${themes.length}：${adapted.name}…`);
-      await importAndApplyTheme(adapted);
-      completed += 1;
-    }
-    setPanelStatus(root, `已批量生成并导入 ${completed} 款适配版；原主题均未修改。`, 'success');
-  } finally {
-    busy = false; setPanelActions(root, Boolean(selectedTheme)); refreshLibrary(root);
-  }
-}
 
 function renderRisks(root, risks) {
   const report = root.querySelector('.report');
@@ -473,7 +454,7 @@ function renderThemeCards(root, themes) {
       if (busy) return;
       selectedTheme = JSON.parse(JSON.stringify(theme)); selectedFileName = '酒馆内的美化';
       for (const card of library.querySelectorAll('.theme-card')) card.setAttribute('aria-pressed', String(card === button));
-      syncPanelFromState(root); setPanelStatus(root, `已选择「${theme.name}」。生成时会创建独立的 TT 适配副本。`, 'success');
+      syncPanelFromState(root); setPanelStatus(root, `已选择「${theme.name}」。可以生成副本，或直接注入所选原美化。`, 'success');
     });
     library.append(button);
   }
@@ -522,11 +503,7 @@ function openPanel(preferredDocument = null) {
       closeVisualEditor = openVisualEditor({
         hostWin, theme,
         onDownload: downloadTheme,
-        onSave: async edited => {
-          edited.name = getUniqueThemeName(edited.name);
-          await importAndApplyTheme(edited);
-          if (!await verifySavedTheme(hostWin, edited)) throw new Error('未能核实副本已保存');
-        },
+        onSave: (edited, originalCss) => updateActiveThemeCss(hostWin, edited, originalCss),
         onClose: message => {
           closeVisualEditor = null;
           host.style.setProperty('display', 'block', 'important');
@@ -650,9 +627,30 @@ function openPanel(preferredDocument = null) {
     }
   });
 
-  root.querySelector('.batch-import')?.addEventListener('click', async () => {
-    try { await batchImportThemes(root); }
-    catch (error) { busy = false; setPanelActions(root, Boolean(selectedTheme)); setPanelStatus(root, `批量导入失败：${error?.message || error}`, 'error'); }
+  root.querySelector('.inject-original')?.addEventListener('click', async () => {
+    if (busy || !selectedTheme || selectedFileName !== '酒馆内的美化') return;
+    busy = true; setPanelActions(root, false);
+    try {
+      const name = selectedTheme.name;
+      const installed = await readInstalledThemes(hostWin);
+      const fresh = installed.find(item => item.name === name);
+      if (!fresh) throw new Error('所选美化已不存在，请刷新列表。');
+      const select = getThemeSelect(doc);
+      if (!select) throw new Error('没有找到酒馆主题切换控件。');
+      if (select.value !== name) {
+        select.value = name;
+        select.dispatchEvent(new hostWin.Event('change', { bubbles: true }));
+        await waitForHostCondition(hostWin, () => select.value === name && doc.getElementById('custom-style')?.textContent === (fresh.custom_css || ''));
+      }
+      const originalCss = doc.getElementById('custom-style')?.textContent || '';
+      const edited = adaptTheme({ ...fresh, custom_css: originalCss }, options);
+      edited.name = name;
+      setPanelStatus(root, `正在注入并保存原美化「${name}」…`);
+      await updateActiveThemeCss(hostWin, edited, originalCss);
+      selectedTheme = { ...fresh, custom_css: edited.custom_css };
+      setPanelStatus(root, `已直接注入并保存「${name}」，名称不变。`, 'success');
+    } catch (error) { setPanelStatus(root, `注入未完成：${error.message}`, 'error'); }
+    finally { busy = false; setPanelActions(root, Boolean(selectedTheme)); refreshLibrary(root); }
   });
 
   root.querySelector('.download')?.addEventListener('click', () => {

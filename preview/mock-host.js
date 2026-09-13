@@ -38,6 +38,13 @@ window.fetch = async (input, options) => {
   return nativeFetch(input, options);
 };
 const select = document.querySelector('#themes');
+const cssInput = document.createElement('textarea'); cssInput.id = 'customCSS'; cssInput.hidden = true; document.body.append(cssInput);
+const updateButton = document.createElement('button'); updateButton.id = 'ui-preset-update-button'; updateButton.hidden = true; document.body.append(updateButton);
+cssInput.addEventListener('input', () => document.querySelector('#custom-style').textContent = cssInput.value);
+updateButton.addEventListener('click', () => {
+  const theme = themes.find(item => item.name === select.value);
+  if (theme) theme.custom_css = cssInput.value;
+});
 function addOption(theme) { const option = document.createElement('option'); option.value = theme.name; option.textContent = theme.name; select.append(option); }
 themes.forEach(addOption);
 document.querySelector('#custom-style').textContent = themes[0].custom_css;

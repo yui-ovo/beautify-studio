@@ -212,7 +212,7 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
   }
   function setPage(page) { $$('[data-page]').forEach(el => el.hidden = el.dataset.page !== page); $$('[data-tab]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.tab === page))); }
   function restoreHistory(next, message) { state = next; writeCss(buildEditedCss(state.source, state.edits)); render(); feedback(message); }
-  function makeTheme() { return { ...JSON.parse(JSON.stringify(theme)), custom_css: draft, name: `${theme.name} · 我的微调` }; }
+  function makeTheme() { return { ...JSON.parse(JSON.stringify(theme)), custom_css: draft, name: theme.name }; }
   function endHold() { hostWin.clearTimeout(heldTimer); hostWin.clearInterval(heldInterval); }
   async function action(name) {
     if (saving) return;
@@ -234,13 +234,13 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
     }
     if (name === 'download') { onDownload(makeTheme()); feedback('已导出主题 JSON，当前仍可继续编辑。'); return; }
     if (name === 'save') {
-      const result = makeTheme(); saving = true; endHold(); render(); feedback('正在通过酒馆保存副本…');
+      const result = makeTheme(); saving = true; endHold(); render(); feedback('正在保存到当前美化…');
       observer.disconnect(); previewStyle.textContent = ''; host.style.setProperty('display', 'none', 'important');
-      try { await onSave(result); dispose(false); onClose(`已保存并应用「${result.name}」。`); }
+      try { await onSave(result, original); dispose(false); onClose(`已保存到当前美化「${result.name}」。`); }
       catch (error) {
         saving = false; host.style.removeProperty('display');
         if (nativeStyle.textContent === original) { writeCss(draft); observer.observe(nativeStyle, { childList: true, characterData: true, subtree: true }); }
-        else { dispose(false); onClose(`保存未核实：${error.message}。请在美化库检查副本。`); return; }
+        else { dispose(false); onClose(`保存未核实：${error.message}。请在美化库检查原美化。`); return; }
         render(); feedback(`保存失败：${error.message}；可以导出 JSON。`);
       }
     }
