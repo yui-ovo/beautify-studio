@@ -8,7 +8,7 @@ export function editorMarkup() {
     <section class="ve-sheet" aria-label="可视化美化编辑器">
       <div class="ve-sheet-head"><div><span class="ve-eyebrow">MAKE IT YOURS / 01</span></div><button class="ve-icon" data-action="close" aria-label="关闭并放弃修改">×</button></div>
       <div class="ve-theme"><span class="ve-theme-icon">◈</span><div><small>正在编辑 · 当前美化</small><b class="ve-theme-name"></b></div><span class="ve-draft">草稿</span></div>
-      <nav class="ve-tabs" aria-label="编辑内容"><button data-tab="parts" aria-pressed="true">按部位调整</button><button data-tab="notes" aria-pressed="false">作者说明 <span class="ve-note-count">0</span></button><button data-tab="changes" aria-pressed="false">修改记录</button></nav>
+      <nav class="ve-tabs" aria-label="编辑内容"><button data-tab="parts" aria-pressed="true">按部位调整</button><button data-tab="notes" aria-pressed="false">作者说明 <span class="ve-note-count">0</span></button><button data-tab="images" aria-pressed="false">图片资源 <span class="ve-image-count">0</span></button><button data-tab="changes" aria-pressed="false">修改记录</button></nav>
       <div class="ve-scroll">
         <div data-page="parts">
           <div class="ve-section-label"><span>01 / 选一个部位</span><button class="ve-text" data-action="pick">⌖ 去屏幕上点选</button></div>
@@ -21,6 +21,7 @@ export function editorMarkup() {
           <div class="ve-coming"><span>接下来</span> 顶栏 · 消息气泡 <small>逐步开放</small></div>
         </div>
         <div data-page="notes" hidden><p class="ve-description">美化作者写在 CSS 里的小提示，都收在这里。</p><label class="ve-search"><span>⌕</span><input type="search" placeholder="搜索说明，比如：头像、颜色…" aria-label="搜索作者说明"></label><div class="ve-notes"></div></div>
+        <div data-page="images" hidden><p class="ve-description">替换链接，或从相册选择。相册图片会自动缩小并内嵌到美化，导出时一起带走。</p><div class="ve-images"></div></div>
         <div data-page="changes" hidden><p class="ve-description">每次调整都有迹可循。保存时写入当前美化。</p><div class="ve-changes"></div><button class="ve-reset-all" data-action="reset-all">还原全部调整</button></div>
       </div>
       <footer class="ve-footer"><div class="ve-feedback" role="status" aria-live="polite">试着把圆角加 1，看看头像的变化。</div><div class="ve-footer-actions"><button class="ve-icon" data-action="undo" aria-label="撤销">${historyIcon()}</button><button class="ve-icon" data-action="redo" aria-label="重做">${historyIcon(true)}</button><button class="ve-export" data-action="download">导出 JSON</button><button class="ve-save" data-action="save">保存当前美化</button></div><small>保存到原美化 · 未保存可关闭恢复</small></footer>

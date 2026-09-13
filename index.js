@@ -4149,8 +4149,436 @@ var require_postcss = __commonJS({
   }
 });
 
+// node_modules/postcss-value-parser/lib/parse.js
+var require_parse2 = __commonJS({
+  "node_modules/postcss-value-parser/lib/parse.js"(exports, module) {
+    var openParentheses = "(".charCodeAt(0);
+    var closeParentheses = ")".charCodeAt(0);
+    var singleQuote = "'".charCodeAt(0);
+    var doubleQuote = '"'.charCodeAt(0);
+    var backslash = "\\".charCodeAt(0);
+    var slash = "/".charCodeAt(0);
+    var comma = ",".charCodeAt(0);
+    var colon = ":".charCodeAt(0);
+    var star2 = "*".charCodeAt(0);
+    var uLower = "u".charCodeAt(0);
+    var uUpper = "U".charCodeAt(0);
+    var plus = "+".charCodeAt(0);
+    var isUnicodeRange = /^[a-f0-9?-]+$/i;
+    module.exports = function(input) {
+      var tokens = [];
+      var value = input;
+      var next, quote, prev, token, escape, escapePos, whitespacePos, parenthesesOpenPos;
+      var pos = 0;
+      var code = value.charCodeAt(pos);
+      var max = value.length;
+      var stack = [{ nodes: tokens }];
+      var balanced = 0;
+      var parent;
+      var name = "";
+      var before = "";
+      var after = "";
+      while (pos < max) {
+        if (code <= 32) {
+          next = pos;
+          do {
+            next += 1;
+            code = value.charCodeAt(next);
+          } while (code <= 32);
+          token = value.slice(pos, next);
+          prev = tokens[tokens.length - 1];
+          if (code === closeParentheses && balanced) {
+            after = token;
+          } else if (prev && prev.type === "div") {
+            prev.after = token;
+            prev.sourceEndIndex += token.length;
+          } else if (code === comma || code === colon || code === slash && value.charCodeAt(next + 1) !== star2 && (!parent || parent && parent.type === "function" && parent.value !== "calc")) {
+            before = token;
+          } else {
+            tokens.push({
+              type: "space",
+              sourceIndex: pos,
+              sourceEndIndex: next,
+              value: token
+            });
+          }
+          pos = next;
+        } else if (code === singleQuote || code === doubleQuote) {
+          next = pos;
+          quote = code === singleQuote ? "'" : '"';
+          token = {
+            type: "string",
+            sourceIndex: pos,
+            quote
+          };
+          do {
+            escape = false;
+            next = value.indexOf(quote, next + 1);
+            if (~next) {
+              escapePos = next;
+              while (value.charCodeAt(escapePos - 1) === backslash) {
+                escapePos -= 1;
+                escape = !escape;
+              }
+            } else {
+              value += quote;
+              next = value.length - 1;
+              token.unclosed = true;
+            }
+          } while (escape);
+          token.value = value.slice(pos + 1, next);
+          token.sourceEndIndex = token.unclosed ? next : next + 1;
+          tokens.push(token);
+          pos = next + 1;
+          code = value.charCodeAt(pos);
+        } else if (code === slash && value.charCodeAt(pos + 1) === star2) {
+          next = value.indexOf("*/", pos);
+          token = {
+            type: "comment",
+            sourceIndex: pos,
+            sourceEndIndex: next + 2
+          };
+          if (next === -1) {
+            token.unclosed = true;
+            next = value.length;
+            token.sourceEndIndex = next;
+          }
+          token.value = value.slice(pos + 2, next);
+          tokens.push(token);
+          pos = next + 2;
+          code = value.charCodeAt(pos);
+        } else if ((code === slash || code === star2) && parent && parent.type === "function" && parent.value === "calc") {
+          token = value[pos];
+          tokens.push({
+            type: "word",
+            sourceIndex: pos - before.length,
+            sourceEndIndex: pos + token.length,
+            value: token
+          });
+          pos += 1;
+          code = value.charCodeAt(pos);
+        } else if (code === slash || code === comma || code === colon) {
+          token = value[pos];
+          tokens.push({
+            type: "div",
+            sourceIndex: pos - before.length,
+            sourceEndIndex: pos + token.length,
+            value: token,
+            before,
+            after: ""
+          });
+          before = "";
+          pos += 1;
+          code = value.charCodeAt(pos);
+        } else if (openParentheses === code) {
+          next = pos;
+          do {
+            next += 1;
+            code = value.charCodeAt(next);
+          } while (code <= 32);
+          parenthesesOpenPos = pos;
+          token = {
+            type: "function",
+            sourceIndex: pos - name.length,
+            value: name,
+            before: value.slice(parenthesesOpenPos + 1, next)
+          };
+          pos = next;
+          if (name === "url" && code !== singleQuote && code !== doubleQuote) {
+            next -= 1;
+            do {
+              escape = false;
+              next = value.indexOf(")", next + 1);
+              if (~next) {
+                escapePos = next;
+                while (value.charCodeAt(escapePos - 1) === backslash) {
+                  escapePos -= 1;
+                  escape = !escape;
+                }
+              } else {
+                value += ")";
+                next = value.length - 1;
+                token.unclosed = true;
+              }
+            } while (escape);
+            whitespacePos = next;
+            do {
+              whitespacePos -= 1;
+              code = value.charCodeAt(whitespacePos);
+            } while (code <= 32);
+            if (parenthesesOpenPos < whitespacePos) {
+              if (pos !== whitespacePos + 1) {
+                token.nodes = [
+                  {
+                    type: "word",
+                    sourceIndex: pos,
+                    sourceEndIndex: whitespacePos + 1,
+                    value: value.slice(pos, whitespacePos + 1)
+                  }
+                ];
+              } else {
+                token.nodes = [];
+              }
+              if (token.unclosed && whitespacePos + 1 !== next) {
+                token.after = "";
+                token.nodes.push({
+                  type: "space",
+                  sourceIndex: whitespacePos + 1,
+                  sourceEndIndex: next,
+                  value: value.slice(whitespacePos + 1, next)
+                });
+              } else {
+                token.after = value.slice(whitespacePos + 1, next);
+                token.sourceEndIndex = next;
+              }
+            } else {
+              token.after = "";
+              token.nodes = [];
+            }
+            pos = next + 1;
+            token.sourceEndIndex = token.unclosed ? next : pos;
+            code = value.charCodeAt(pos);
+            tokens.push(token);
+          } else {
+            balanced += 1;
+            token.after = "";
+            token.sourceEndIndex = pos + 1;
+            tokens.push(token);
+            stack.push(token);
+            tokens = token.nodes = [];
+            parent = token;
+          }
+          name = "";
+        } else if (closeParentheses === code && balanced) {
+          pos += 1;
+          code = value.charCodeAt(pos);
+          parent.after = after;
+          parent.sourceEndIndex += after.length;
+          after = "";
+          balanced -= 1;
+          stack[stack.length - 1].sourceEndIndex = pos;
+          stack.pop();
+          parent = stack[balanced];
+          tokens = parent.nodes;
+        } else {
+          next = pos;
+          do {
+            if (code === backslash) {
+              next += 1;
+            }
+            next += 1;
+            code = value.charCodeAt(next);
+          } while (next < max && !(code <= 32 || code === singleQuote || code === doubleQuote || code === comma || code === colon || code === slash || code === openParentheses || code === star2 && parent && parent.type === "function" && parent.value === "calc" || code === slash && parent.type === "function" && parent.value === "calc" || code === closeParentheses && balanced));
+          token = value.slice(pos, next);
+          if (openParentheses === code) {
+            name = token;
+          } else if ((uLower === token.charCodeAt(0) || uUpper === token.charCodeAt(0)) && plus === token.charCodeAt(1) && isUnicodeRange.test(token.slice(2))) {
+            tokens.push({
+              type: "unicode-range",
+              sourceIndex: pos,
+              sourceEndIndex: next,
+              value: token
+            });
+          } else {
+            tokens.push({
+              type: "word",
+              sourceIndex: pos,
+              sourceEndIndex: next,
+              value: token
+            });
+          }
+          pos = next;
+        }
+      }
+      for (pos = stack.length - 1; pos; pos -= 1) {
+        stack[pos].unclosed = true;
+        stack[pos].sourceEndIndex = value.length;
+      }
+      return stack[0].nodes;
+    };
+  }
+});
+
+// node_modules/postcss-value-parser/lib/walk.js
+var require_walk = __commonJS({
+  "node_modules/postcss-value-parser/lib/walk.js"(exports, module) {
+    module.exports = function walk(nodes, cb, bubble) {
+      var i, max, node, result;
+      for (i = 0, max = nodes.length; i < max; i += 1) {
+        node = nodes[i];
+        if (!bubble) {
+          result = cb(node, i, nodes);
+        }
+        if (result !== false && node.type === "function" && Array.isArray(node.nodes)) {
+          walk(node.nodes, cb, bubble);
+        }
+        if (bubble) {
+          cb(node, i, nodes);
+        }
+      }
+    };
+  }
+});
+
+// node_modules/postcss-value-parser/lib/stringify.js
+var require_stringify2 = __commonJS({
+  "node_modules/postcss-value-parser/lib/stringify.js"(exports, module) {
+    function stringifyNode(node, custom) {
+      var type = node.type;
+      var value = node.value;
+      var buf;
+      var customResult;
+      if (custom && (customResult = custom(node)) !== void 0) {
+        return customResult;
+      } else if (type === "word" || type === "space") {
+        return value;
+      } else if (type === "string") {
+        buf = node.quote || "";
+        return buf + value + (node.unclosed ? "" : buf);
+      } else if (type === "comment") {
+        return "/*" + value + (node.unclosed ? "" : "*/");
+      } else if (type === "div") {
+        return (node.before || "") + value + (node.after || "");
+      } else if (Array.isArray(node.nodes)) {
+        buf = stringify2(node.nodes, custom);
+        if (type !== "function") {
+          return buf;
+        }
+        return value + "(" + (node.before || "") + buf + (node.after || "") + (node.unclosed ? "" : ")");
+      }
+      return value;
+    }
+    function stringify2(nodes, custom) {
+      var result, i;
+      if (Array.isArray(nodes)) {
+        result = "";
+        for (i = nodes.length - 1; ~i; i -= 1) {
+          result = stringifyNode(nodes[i], custom) + result;
+        }
+        return result;
+      }
+      return stringifyNode(nodes, custom);
+    }
+    module.exports = stringify2;
+  }
+});
+
+// node_modules/postcss-value-parser/lib/unit.js
+var require_unit = __commonJS({
+  "node_modules/postcss-value-parser/lib/unit.js"(exports, module) {
+    var minus = "-".charCodeAt(0);
+    var plus = "+".charCodeAt(0);
+    var dot = ".".charCodeAt(0);
+    var exp = "e".charCodeAt(0);
+    var EXP = "E".charCodeAt(0);
+    function likeNumber(value) {
+      var code = value.charCodeAt(0);
+      var nextCode;
+      if (code === plus || code === minus) {
+        nextCode = value.charCodeAt(1);
+        if (nextCode >= 48 && nextCode <= 57) {
+          return true;
+        }
+        var nextNextCode = value.charCodeAt(2);
+        if (nextCode === dot && nextNextCode >= 48 && nextNextCode <= 57) {
+          return true;
+        }
+        return false;
+      }
+      if (code === dot) {
+        nextCode = value.charCodeAt(1);
+        if (nextCode >= 48 && nextCode <= 57) {
+          return true;
+        }
+        return false;
+      }
+      if (code >= 48 && code <= 57) {
+        return true;
+      }
+      return false;
+    }
+    module.exports = function(value) {
+      var pos = 0;
+      var length = value.length;
+      var code;
+      var nextCode;
+      var nextNextCode;
+      if (length === 0 || !likeNumber(value)) {
+        return false;
+      }
+      code = value.charCodeAt(pos);
+      if (code === plus || code === minus) {
+        pos++;
+      }
+      while (pos < length) {
+        code = value.charCodeAt(pos);
+        if (code < 48 || code > 57) {
+          break;
+        }
+        pos += 1;
+      }
+      code = value.charCodeAt(pos);
+      nextCode = value.charCodeAt(pos + 1);
+      if (code === dot && nextCode >= 48 && nextCode <= 57) {
+        pos += 2;
+        while (pos < length) {
+          code = value.charCodeAt(pos);
+          if (code < 48 || code > 57) {
+            break;
+          }
+          pos += 1;
+        }
+      }
+      code = value.charCodeAt(pos);
+      nextCode = value.charCodeAt(pos + 1);
+      nextNextCode = value.charCodeAt(pos + 2);
+      if ((code === exp || code === EXP) && (nextCode >= 48 && nextCode <= 57 || (nextCode === plus || nextCode === minus) && nextNextCode >= 48 && nextNextCode <= 57)) {
+        pos += nextCode === plus || nextCode === minus ? 3 : 2;
+        while (pos < length) {
+          code = value.charCodeAt(pos);
+          if (code < 48 || code > 57) {
+            break;
+          }
+          pos += 1;
+        }
+      }
+      return {
+        number: value.slice(0, pos),
+        unit: value.slice(pos)
+      };
+    };
+  }
+});
+
+// node_modules/postcss-value-parser/lib/index.js
+var require_lib = __commonJS({
+  "node_modules/postcss-value-parser/lib/index.js"(exports, module) {
+    var parse2 = require_parse2();
+    var walk = require_walk();
+    var stringify2 = require_stringify2();
+    function ValueParser(value) {
+      if (this instanceof ValueParser) {
+        this.nodes = parse2(value);
+        return this;
+      }
+      return new ValueParser(value);
+    }
+    ValueParser.prototype.toString = function() {
+      return Array.isArray(this.nodes) ? stringify2(this.nodes) : "";
+    };
+    ValueParser.prototype.walk = function(cb, bubble) {
+      walk(this.nodes, cb, bubble);
+      return this;
+    };
+    ValueParser.unit = require_unit();
+    ValueParser.walk = walk;
+    ValueParser.stringify = stringify2;
+    module.exports = ValueParser;
+  }
+});
+
 // src/config.js
-var VERSION = "1.3.0";
+var VERSION = "1.4.0";
 var BUTTON_NAME = "美化工作室";
 var STORAGE_KEY = "tt-theme-helper-options-v2";
 var OVERLAY_HOST_ID = "tt-theme-helper-overlay-host";
@@ -5177,6 +5605,10 @@ h3 { font-size:15px; font-weight:600; }
 
 /* Explicit centering overrides native iOS button padding and font baselines. */
 .visual-editor [data-nudge],.visual-editor [data-action="undo"],.visual-editor [data-action="redo"]{display:flex!important;align-items:center!important;justify-content:center!important;padding:0!important;line-height:1!important;text-indent:0!important;box-sizing:border-box!important;appearance:none;-webkit-appearance:none;flex-shrink:0}.visual-editor .ve-step-icon,.visual-editor .ve-history-icon{display:block!important;width:22px!important;height:22px!important;margin:0!important;flex:0 0 22px;position:static!important}.ve-controller-foot [data-action="undo"]{width:32px;height:32px}.ve-footer-actions .ve-save{font-size:11px!important}
+
+/* Image resource editor: four readable tabs and real image previews. */
+.ve-tabs{gap:0!important;justify-content:space-between}.ve-tabs button{white-space:nowrap;font-size:12px!important}.ve-tabs button span{font-size:10px}.ve-image-card{padding:12px;background:#fffffc;border:1px solid #dce2d4;border-radius:12px;margin-bottom:14px;min-width:0}.ve-image-thumb{height:140px;border-radius:8px;background:repeating-conic-gradient(#eceee8 0% 25%,#f8f9f5 0% 50%) 0/18px 18px;display:flex;align-items:center;justify-content:center;overflow:hidden}.ve-image-thumb img{display:block;width:100%;height:100%;object-fit:contain}.ve-image-thumb span{font-size:12px;padding:20px;text-align:center;color:#737b6c}.ve-image-card h3{font-size:14px;margin:12px 0 3px;overflow-wrap:anywhere}.ve-image-card>small{display:block;font-size:11px;color:#7d8575;overflow-wrap:anywhere}.ve-image-note{font-size:12px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;margin:9px 0}.ve-image-url{display:block;font-size:12px;color:#737b6c}.ve-image-url input{display:block;width:100%;font-size:12px!important;margin-top:5px;border:1px solid #dce2d4;background:#f8faf5;border-radius:7px;padding:10px;min-width:0}.ve-image-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.ve-image-actions button{font-size:12px!important;padding:9px!important;border-radius:7px;border:1px solid #d6ddce!important;background:#edf1e6!important}.ve-image-actions button:last-child{color:#607052}.ve-image-usage{font-size:12px;color:#858e7c;line-height:1.6;margin:10px 0 0}.ve-change{overflow-wrap:anywhere}.ve-change b{max-width:50%}
+@media(max-width:370px){.ve-tabs{margin-left:12px;margin-right:12px}.ve-tabs button{font-size:11px!important}.ve-tabs button span{font-size:9px}}
 `;
 
 // node_modules/postcss/lib/postcss.mjs
@@ -5315,7 +5747,7 @@ function editorMarkup() {
     <section class="ve-sheet" aria-label="可视化美化编辑器">
       <div class="ve-sheet-head"><div><span class="ve-eyebrow">MAKE IT YOURS / 01</span></div><button class="ve-icon" data-action="close" aria-label="关闭并放弃修改">×</button></div>
       <div class="ve-theme"><span class="ve-theme-icon">◈</span><div><small>正在编辑 · 当前美化</small><b class="ve-theme-name"></b></div><span class="ve-draft">草稿</span></div>
-      <nav class="ve-tabs" aria-label="编辑内容"><button data-tab="parts" aria-pressed="true">按部位调整</button><button data-tab="notes" aria-pressed="false">作者说明 <span class="ve-note-count">0</span></button><button data-tab="changes" aria-pressed="false">修改记录</button></nav>
+      <nav class="ve-tabs" aria-label="编辑内容"><button data-tab="parts" aria-pressed="true">按部位调整</button><button data-tab="notes" aria-pressed="false">作者说明 <span class="ve-note-count">0</span></button><button data-tab="images" aria-pressed="false">图片资源 <span class="ve-image-count">0</span></button><button data-tab="changes" aria-pressed="false">修改记录</button></nav>
       <div class="ve-scroll">
         <div data-page="parts">
           <div class="ve-section-label"><span>01 / 选一个部位</span><button class="ve-text" data-action="pick">⌖ 去屏幕上点选</button></div>
@@ -5328,6 +5760,7 @@ function editorMarkup() {
           <div class="ve-coming"><span>接下来</span> 顶栏 · 消息气泡 <small>逐步开放</small></div>
         </div>
         <div data-page="notes" hidden><p class="ve-description">美化作者写在 CSS 里的小提示，都收在这里。</p><label class="ve-search"><span>⌕</span><input type="search" placeholder="搜索说明，比如：头像、颜色…" aria-label="搜索作者说明"></label><div class="ve-notes"></div></div>
+        <div data-page="images" hidden><p class="ve-description">替换链接，或从相册选择。相册图片会自动缩小并内嵌到美化，导出时一起带走。</p><div class="ve-images"></div></div>
         <div data-page="changes" hidden><p class="ve-description">每次调整都有迹可循。保存时写入当前美化。</p><div class="ve-changes"></div><button class="ve-reset-all" data-action="reset-all">还原全部调整</button></div>
       </div>
       <footer class="ve-footer"><div class="ve-feedback" role="status" aria-live="polite">试着把圆角加 1，看看头像的变化。</div><div class="ve-footer-actions"><button class="ve-icon" data-action="undo" aria-label="撤销">${historyIcon()}</button><button class="ve-icon" data-action="redo" aria-label="重做">${historyIcon(true)}</button><button class="ve-export" data-action="download">导出 JSON</button><button class="ve-save" data-action="save">保存当前美化</button></div><small>保存到原美化 · 未保存可关闭恢复</small></footer>
@@ -5336,17 +5769,186 @@ function editorMarkup() {
   </div>`;
 }
 
+// src/core/images.js
+var import_postcss_value_parser = __toESM(require_lib(), 1);
+/*! postcss-value-parser (MIT)
+Copyright (c) Bogdan Chadkin <trysound@yandex.ru>
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use,
+copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+*/
+function unescapeCss(value) {
+  return value.replace(/\\(?:([\da-f]{1,6})\s?|([^\r\n\f]))/gi, (_, hex, char) => {
+    const code = hex ? parseInt(hex, 16) : 0;
+    return hex ? String.fromCodePoint(code > 0 && code <= 1114111 && !(code >= 55296 && code <= 57343) ? code : 65533) : char;
+  });
+}
+function validateImageUrl(value) {
+  const url = String(value || "").trim();
+  if (!url || /[\u0000-\u001f\u007f]/.test(url)) throw new Error("请填写有效的图片链接。");
+  if (/^data:/i.test(url)) {
+    if (!/^data:image\/(?:png|jpe?g|webp|gif|avif|bmp|svg\+xml)(?:;[^,]*)?,/i.test(url)) throw new Error("只支持图片类型的内嵌地址。");
+  } else {
+    if (/^[a-z][a-z\d+.-]*:/i.test(url) && !/^https?:\/\//i.test(url)) throw new Error("请使用 HTTP、HTTPS 或酒馆内的图片路径；临时 blob 地址不能保存。");
+    try {
+      const parsed = new URL(url, "https://tavern.invalid/");
+      if (!["https:", "http:"].includes(parsed.protocol)) throw 0;
+    } catch {
+      throw new Error("图片链接格式不正确。");
+    }
+  }
+  return url;
+}
+function visitImages(css, callback) {
+  const root2 = postcss_default.parse(css);
+  let declaration = 0;
+  root2.walkDecls((decl2) => {
+    const index = declaration++;
+    if (decl2.parent.type === "atrule" && decl2.parent.name.toLowerCase() === "font-face") return;
+    if (!/^(?:--|(?:-webkit-)?(?:background|mask|border-image)|content$|list-style|cursor$)/i.test(decl2.prop)) return;
+    const parsed = (0, import_postcss_value_parser.default)(decl2.value);
+    let occurrence = 0, changed = false;
+    parsed.walk((node) => {
+      if (node.type !== "function" || node.value.toLowerCase() !== "url") return;
+      const id = `${index}:${occurrence++}`;
+      const children = node.nodes.filter((n) => !["space", "comment"].includes(n.type));
+      if (node.unclosed || children.length !== 1 || !["word", "string"].includes(children[0].type) || children[0].unclosed) return false;
+      const url = unescapeCss(children[0].value);
+      if (!url || url.startsWith("#") || /\.(?:woff2?|ttf|otf|eot)(?:[?#]|$)/i.test(url)) return false;
+      const replacement = callback({ id, url, decl: decl2 });
+      if (replacement !== void 0) {
+        node.nodes = [{ type: "string", quote: '"', value: replacement.replace(/\\/g, "\\\\").replace(/"/g, '\\"') }];
+        node.before = "";
+        node.after = "";
+        changed = true;
+      }
+      return false;
+    });
+    if (changed) decl2.value = parsed.toString();
+  });
+  return root2.toString();
+}
+function extractImages(css) {
+  const images = [];
+  visitImages(css, ({ id, url, decl: decl2 }) => {
+    const next = decl2.next(), prev = decl2.prev();
+    const trailing = next?.type === "comment" && next.source?.start?.line === decl2.source?.end?.line;
+    const comment2 = trailing ? next : prev?.type === "comment" ? prev : decl2.parent.prev()?.type === "comment" ? decl2.parent.prev() : null;
+    images.push({
+      id,
+      url,
+      property: decl2.prop,
+      selector: decl2.parent.selector || "",
+      note: comment2?.text.trim() || "",
+      line: decl2.source?.start?.line || 1
+    });
+  });
+  return images;
+}
+function replaceImages(css, replacements = {}) {
+  if (!Object.keys(replacements).length) return css;
+  const found = /* @__PURE__ */ new Set();
+  const result = visitImages(css, ({ id }) => {
+    if (!Object.hasOwn(replacements, id)) return;
+    found.add(id);
+    return validateImageUrl(replacements[id]);
+  });
+  if (found.size !== Object.keys(replacements).length) throw new Error("图片位置已变化，请重新打开编辑器。");
+  return result;
+}
+function imageSize(width, height, max = 1600) {
+  const scale = Math.min(1, max / Math.max(width, height));
+  return { width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)) };
+}
+
+// src/host/images.js
+async function embedImage(win, file) {
+  if (!file || !file.type.startsWith("image/")) throw new Error("请选择图片文件。");
+  if (file.size > 20 * 1024 * 1024) throw new Error("图片超过 20 MB，请先缩小再选择。");
+  const original = await new Promise((resolve, reject) => {
+    const reader = new win.FileReader();
+    const timer = win.setTimeout(() => reader.abort(), 2e4);
+    reader.onload = () => {
+      win.clearTimeout(timer);
+      resolve(reader.result);
+    };
+    reader.onerror = reader.onabort = () => {
+      win.clearTimeout(timer);
+      reject(new Error("图片读取失败，请重新选择。"));
+    };
+    reader.readAsDataURL(file);
+  });
+  if (file.type === "image/gif") {
+    if (file.size > 2 * 1024 * 1024) throw new Error("为保留动画，GIF 请控制在 2 MB 内，或改用图片链接。");
+    return { url: original, detail: "GIF 已内嵌，保留动画" };
+  }
+  const img = await new Promise((resolve, reject) => {
+    const image = new win.Image();
+    const timer = win.setTimeout(() => {
+      image.src = "";
+      reject(new Error("图片解码超时，请改用 JPG、PNG 或 WebP。"));
+    }, 15e3);
+    image.onload = () => {
+      win.clearTimeout(timer);
+      resolve(image);
+    };
+    image.onerror = () => {
+      win.clearTimeout(timer);
+      reject(new Error("这张图片无法读取，请改用 JPG、PNG 或 WebP。"));
+    };
+    image.src = original;
+  });
+  const { width, height } = imageSize(img.naturalWidth, img.naturalHeight);
+  const canvas = win.document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("当前设备无法处理图片，请改用链接。");
+  ctx.drawImage(img, 0, 0, width, height);
+  const url = canvas.toDataURL("image/webp", 0.85);
+  canvas.width = canvas.height = 1;
+  if (url.length > 2.8 * 1024 * 1024) throw new Error("处理后的图片仍超过约 2 MB，请先缩小或改用链接。");
+  return { url, detail: `${width} × ${height} · 约 ${Math.round(url.length * 0.75 / 1024)} KB，已内嵌` };
+}
+
 // src/host/visual-editor.js
 function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
   const doc = hostWin.document;
   const nativeStyle = doc.querySelector("#custom-style");
   if (!nativeStyle) throw new Error("没有找到当前美化的样式，请先在酒馆应用一款美化。");
   const original = nativeStyle.textContent;
+  const originalMedia = nativeStyle.getAttribute("media");
+  let resources = [], resourceError = "";
+  try {
+    resources = extractImages(original);
+  } catch {
+    resourceError = "CSS 有语法问题，暂时无法读取图片资源。";
+  }
+  const imageAssets = /* @__PURE__ */ new Map();
+  let assetSequence = 0, imageBusy = false, currentPage = "parts";
   const previewStyle = doc.createElement("style");
   previewStyle.id = "beautify-visual-preview";
   doc.head.append(previewStyle);
   let draft = original;
-  let state = { source: original, edits: {} };
+  let state = { source: original, edits: {}, images: {} };
   const history = createHistory(state);
   let targetKey = "character", mode = "radius", step = 1, compact = false, picking = false, destroyed = false, saving = false;
   let currentTarget, raf, heldTimer, heldInterval, heldButton = null, heldUntil = 0;
@@ -5373,9 +5975,23 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
     }
   });
   observer.observe(nativeStyle, { childList: true, characterData: true, subtree: true });
+  function restoreNativeMedia() {
+    if (originalMedia === null) nativeStyle.removeAttribute("media");
+    else nativeStyle.setAttribute("media", originalMedia);
+  }
+  function composeCss() {
+    const replacements = Object.fromEntries(Object.entries(state.images).map(([id, asset]) => [id, imageAssets.get(asset).url]));
+    return buildEditedCss(replaceImages(state.source, replacements), state.edits);
+  }
   function writeCss(css) {
     draft = css;
-    previewStyle.textContent = css.slice(original.length);
+    if (!Object.keys(state.images).length) {
+      previewStyle.textContent = css.slice(original.length);
+      restoreNativeMedia();
+    } else {
+      previewStyle.textContent = css;
+      nativeStyle.setAttribute("media", "not all");
+    }
   }
   function visibleTarget(key) {
     const nodes = [...doc.querySelectorAll(TARGETS[key].selector)].filter((n) => n.getClientRects().length);
@@ -5460,13 +6076,14 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
       $(".ve-mini-value").textContent = v[mode];
     }
     $(".ve-color").value = v.color;
-    $$('[data-action="undo"]').forEach((el) => el.disabled = !history.canUndo);
-    $('[data-action="redo"]').disabled = !history.canRedo;
-    $$("[data-nudge], [data-direction], [data-lift], .ve-number, .ve-range, .ve-x, .ve-y, .ve-color").forEach((el) => el.disabled = !available || ["position", "lift"].includes(mode) && !getBaseline(targetKey)?.movable);
-    $('[data-action="save"]').disabled = !history.canUndo || saving;
-    $('[data-action="download"]').disabled = !history.canUndo || saving;
-    $('[data-action="reset-all"]').disabled = !history.canUndo;
+    $$('[data-action="undo"]').forEach((el) => el.disabled = !history.canUndo || imageBusy);
+    $('[data-action="redo"]').disabled = !history.canRedo || imageBusy;
+    $$("[data-nudge], [data-direction], [data-lift], .ve-number, .ve-range, .ve-x, .ve-y, .ve-color").forEach((el) => el.disabled = !available || imageBusy || ["position", "lift"].includes(mode) && !getBaseline(targetKey)?.movable);
+    $('[data-action="save"]').disabled = !history.canUndo || saving || imageBusy;
+    $('[data-action="download"]').disabled = !history.canUndo || saving || imageBusy;
+    $('[data-action="reset-all"]').disabled = !history.canUndo || imageBusy;
     $(".ve-draft").textContent = history.canUndo ? "未保存" : "草稿";
+    $$(".ve-image-card button, .ve-image-card input").forEach((el) => el.disabled = imageBusy);
     renderChanges();
   }
   function updateOutline() {
@@ -5498,11 +6115,11 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
     render();
   }
   function commit(next, label, group = mode) {
-    if (!getBaseline(targetKey)) return;
+    if (imageBusy || !getBaseline(targetKey)) return;
     if (["position", "lift"].includes(group) && !getBaseline(targetKey).movable) return;
     state.edits[targetKey] = { values: next, origin: getBaseline(targetKey).origin, changed: [.../* @__PURE__ */ new Set([...state.edits[targetKey]?.changed || [], group])] };
     history.push(state);
-    writeCss(buildEditedCss(state.source, state.edits));
+    writeCss(composeCss());
     render();
     feedback(label);
     hostWin.requestAnimationFrame(() => {
@@ -5610,6 +6227,139 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
       container.append(empty);
     }
   }
+  function changeImage(resource, url, label) {
+    if (destroyed || saving) return;
+    const clean = validateImageUrl(url);
+    const current = state.images[resource.id] ? imageAssets.get(state.images[resource.id]).url : resource.url;
+    if (clean === current) {
+      feedback("图片链接没有变化。");
+      return;
+    }
+    if (clean === resource.url) delete state.images[resource.id];
+    else {
+      const key = String(++assetSequence);
+      imageAssets.set(key, { url: clean, label });
+      state.images[resource.id] = key;
+    }
+    history.push(state);
+    writeCss(composeCss());
+    render();
+    renderImages();
+    feedback(`已替换 ${resource.property}，保存后写入当前美化。`);
+  }
+  function renderImages() {
+    const container = $(".ve-images");
+    container.replaceChildren();
+    if (!resources.length) {
+      const empty = doc.createElement("p");
+      empty.className = "ve-empty";
+      empty.textContent = resourceError || "这款美化没有找到 url(...) 图片。字体、渐变和聊天消息里的图片不会列在这里。";
+      container.append(empty);
+      return;
+    }
+    for (const resource of resources) {
+      const asset = imageAssets.get(state.images[resource.id]);
+      const url = asset?.url || resource.url;
+      const card = doc.createElement("article");
+      card.className = "ve-image-card";
+      const thumb = doc.createElement("div");
+      thumb.className = "ve-image-thumb";
+      const img = doc.createElement("img");
+      img.alt = `${resource.property} 图片缩略图`;
+      img.loading = "lazy";
+      img.referrerPolicy = "no-referrer";
+      const failed = () => {
+        const tip = doc.createElement("span");
+        tip.textContent = "缩略图暂不可用，仍可替换链接";
+        thumb.replaceChildren(tip);
+      };
+      img.onerror = failed;
+      thumb.append(img);
+      try {
+        img.src = new URL(validateImageUrl(url), doc.baseURI).href;
+      } catch {
+        failed();
+      }
+      const heading = doc.createElement("h3");
+      heading.textContent = resource.note.split("\n")[0].trim().slice(0, 60) || "美化图片";
+      const note = doc.createElement("p");
+      note.className = "ve-image-note";
+      note.textContent = resource.note || "作者没有为此图片留下附近说明。";
+      note.hidden = note.textContent === heading.textContent;
+      const context = doc.createElement("small");
+      context.textContent = `${resource.property} · 第 ${resource.line} 行 · ${resource.selector || "CSS 图片"}`;
+      const urlLabel = doc.createElement("label");
+      urlLabel.className = "ve-image-url";
+      urlLabel.textContent = "图片链接";
+      const input = doc.createElement("input");
+      input.type = "text";
+      input.autocomplete = "off";
+      input.spellcheck = false;
+      input.setAttribute("aria-label", `${resource.property} 图片链接`);
+      input.value = /^data:/i.test(url) ? "" : url;
+      input.placeholder = /^data:/i.test(url) ? "已内嵌图片；可粘贴新链接" : "粘贴图片链接或酒馆图片路径";
+      urlLabel.append(input);
+      const actions = doc.createElement("div");
+      actions.className = "ve-image-actions";
+      const apply = doc.createElement("button");
+      apply.textContent = "替换链接";
+      apply.addEventListener("click", () => {
+        if (imageBusy || saving) return;
+        try {
+          changeImage(resource, input.value, "已替换链接");
+        } catch (error) {
+          feedback(error.message);
+        }
+      });
+      const album = doc.createElement("button");
+      album.textContent = "从相册选择";
+      const file = doc.createElement("input");
+      file.type = "file";
+      file.accept = "image/*";
+      file.hidden = true;
+      file.setAttribute("aria-label", `${resource.property} 从相册选择`);
+      album.addEventListener("click", () => {
+        if (!imageBusy && !saving) file.click();
+      });
+      file.addEventListener("change", async () => {
+        const selected = file.files?.[0];
+        file.value = "";
+        if (!selected || imageBusy || saving) return;
+        imageBusy = true;
+        render();
+        feedback("正在处理图片，完成后会自动预览…");
+        try {
+          const result = await embedImage(hostWin, selected);
+          if (destroyed) return;
+          changeImage(resource, result.url, "已内嵌相册图片");
+          feedback(result.detail + "；保存后写入当前美化。");
+        } catch (error) {
+          if (!destroyed) feedback(error.message);
+        } finally {
+          imageBusy = false;
+          if (!destroyed) render();
+        }
+      });
+      actions.append(apply, album, file);
+      if (asset) {
+        const reset = doc.createElement("button");
+        reset.textContent = "还原此图";
+        reset.addEventListener("click", () => {
+          if (imageBusy || saving) return;
+          delete state.images[resource.id];
+          history.push(state);
+          restoreHistory(state, "已还原这张图片，可撤销。");
+        });
+        actions.append(reset);
+      }
+      const usage = doc.createElement("p");
+      usage.className = "ve-image-usage";
+      usage.textContent = resource.property.startsWith("--") ? "共享变量：使用这个变量的位置会一起换图。" : "只替换这一处图片，其他位置的同名链接保持原样。";
+      card.append(thumb, heading, context, note, urlLabel, actions, usage);
+      container.append(card);
+    }
+    $$(".ve-image-card button, .ve-image-card input").forEach((el) => el.disabled = imageBusy);
+  }
   function renderChanges() {
     const container = $(".ve-changes");
     container.replaceChildren();
@@ -5623,6 +6373,16 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
       row.append(label, value);
       container.append(row);
     }
+    for (const [id, asset] of Object.entries(state.images)) {
+      const resource = resources.find((item) => item.id === id);
+      const row = doc.createElement("div");
+      row.className = "ve-change";
+      const label = doc.createElement("span"), value = doc.createElement("b");
+      label.textContent = `图片 · ${resource?.property || id}`;
+      value.textContent = imageAssets.get(asset).label;
+      row.append(label, value);
+      container.append(row);
+    }
     if (!container.childNodes.length) {
       const empty = doc.createElement("p");
       empty.className = "ve-empty";
@@ -5631,13 +6391,16 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
     }
   }
   function setPage(page) {
+    currentPage = page;
+    if (page === "images") renderImages();
     $$("[data-page]").forEach((el) => el.hidden = el.dataset.page !== page);
     $$("[data-tab]").forEach((el) => el.setAttribute("aria-pressed", String(el.dataset.tab === page)));
   }
   function restoreHistory(next, message) {
     state = next;
-    writeCss(buildEditedCss(state.source, state.edits));
+    writeCss(composeCss());
     render();
+    if (currentPage === "images") renderImages();
     feedback(message);
   }
   function makeTheme() {
@@ -5648,7 +6411,7 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
     hostWin.clearInterval(heldInterval);
   }
   async function action(name) {
-    if (saving) return;
+    if (saving || imageBusy && name !== "close") return;
     if (name === "undo") return restoreHistory(history.undo(), "已撤销上一次调整。");
     if (name === "redo") return restoreHistory(history.redo(), "已重做。");
     if (name === "compact") return setCompact(true);
@@ -5668,8 +6431,8 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
       return;
     }
     if (name === "reset-all") {
-      history.push({ source: original, edits: {} });
-      return restoreHistory({ source: original, edits: {} }, "已还原全部调整，可撤销。");
+      history.push({ source: original, edits: {}, images: {} });
+      return restoreHistory({ source: original, edits: {}, images: {} }, "已还原全部调整，可撤销。");
     }
     if (name === "reset-mode") {
       if (!state.edits[targetKey]) return;
@@ -5692,6 +6455,7 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
       feedback("正在保存到当前美化…");
       observer.disconnect();
       previewStyle.textContent = "";
+      restoreNativeMedia();
       host.style.setProperty("display", "none", "important");
       try {
         await onSave(result, original);
@@ -5837,6 +6601,7 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
     observer.disconnect();
     hostWin.cancelAnimationFrame(raf);
     previewStyle.remove();
+    restoreNativeMedia();
     doc.removeEventListener("click", pick, true);
     themeSelect?.removeEventListener("change", themeChanged);
     doc.removeEventListener("pointerdown", blockPickFocus, true);
@@ -5846,6 +6611,7 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
     host.remove();
     initialFocus?.focus?.();
   }
+  $(".ve-image-count").textContent = resources.length;
   renderNotes();
   locate(false);
   render();

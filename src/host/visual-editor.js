@@ -1,5 +1,7 @@
 import { TARGETS, DEFAULT_VALUES, parseSource, buildEditedCss, stepValue, createHistory } from '../core/editor.js';
 import { editorMarkup } from '../ui/editor-markup.js';
+import { extractImages, replaceImages, validateImageUrl } from '../core/images.js';
+import { embedImage } from './images.js';
 import PANEL_CSS from '../ui/studio.css';
 
 // The first release edits the active theme. Preview CSS is never persisted by this module.
@@ -8,11 +10,16 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
   const nativeStyle = doc.querySelector('#custom-style');
   if (!nativeStyle) throw new Error('没有找到当前美化的样式，请先在酒馆应用一款美化。');
   const original = nativeStyle.textContent;
+  const originalMedia = nativeStyle.getAttribute('media');
+  let resources = [], resourceError = '';
+  try { resources = extractImages(original); } catch { resourceError = 'CSS 有语法问题，暂时无法读取图片资源。'; }
+  const imageAssets = new Map();
+  let assetSequence = 0, imageBusy = false, currentPage = 'parts';
   const previewStyle = doc.createElement('style');
   previewStyle.id = 'beautify-visual-preview';
   doc.head.append(previewStyle);
   let draft = original;
-  let state = { source: original, edits: {} };
+  let state = { source: original, edits: {}, images: {} };
   const history = createHistory(state);
   let targetKey = 'character', mode = 'radius', step = 1, compact = false, picking = false, destroyed = false, saving = false;
   let currentTarget, raf, heldTimer, heldInterval, heldButton = null, heldUntil = 0;
@@ -32,9 +39,20 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
   });
   observer.observe(nativeStyle, { childList: true, characterData: true, subtree: true });
 
+  function restoreNativeMedia() {
+    if (originalMedia === null) nativeStyle.removeAttribute('media');
+    else nativeStyle.setAttribute('media', originalMedia);
+  }
+  function composeCss() {
+    const replacements = Object.fromEntries(Object.entries(state.images).map(([id, asset]) => [id, imageAssets.get(asset).url]));
+    return buildEditedCss(replaceImages(state.source, replacements), state.edits);
+  }
   function writeCss(css) {
     draft = css;
-    previewStyle.textContent = css.slice(original.length);
+    // Image replacement changes existing declarations, so preview the complete
+    // draft while keeping the native CSS text intact for cancellation/stale checks.
+    if (!Object.keys(state.images).length) { previewStyle.textContent = css.slice(original.length); restoreNativeMedia(); }
+    else { previewStyle.textContent = css; nativeStyle.setAttribute('media', 'not all'); }
   }
   function visibleTarget(key) {
     const nodes = [...doc.querySelectorAll(TARGETS[key].selector)].filter(n => n.getClientRects().length);
@@ -102,13 +120,14 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
       $('.ve-mini-value').textContent = v[mode];
     }
     $('.ve-color').value = v.color;
-    $$('[data-action="undo"]').forEach(el => el.disabled = !history.canUndo);
-    $('[data-action="redo"]').disabled = !history.canRedo;
-    $$('[data-nudge], [data-direction], [data-lift], .ve-number, .ve-range, .ve-x, .ve-y, .ve-color').forEach(el => el.disabled = !available || (['position', 'lift'].includes(mode) && !getBaseline(targetKey)?.movable));
-    $('[data-action="save"]').disabled = !history.canUndo || saving;
-    $('[data-action="download"]').disabled = !history.canUndo || saving;
-    $('[data-action="reset-all"]').disabled = !history.canUndo;
+    $$('[data-action="undo"]').forEach(el => el.disabled = !history.canUndo || imageBusy);
+    $('[data-action="redo"]').disabled = !history.canRedo || imageBusy;
+    $$('[data-nudge], [data-direction], [data-lift], .ve-number, .ve-range, .ve-x, .ve-y, .ve-color').forEach(el => el.disabled = !available || imageBusy || (['position', 'lift'].includes(mode) && !getBaseline(targetKey)?.movable));
+    $('[data-action="save"]').disabled = !history.canUndo || saving || imageBusy;
+    $('[data-action="download"]').disabled = !history.canUndo || saving || imageBusy;
+    $('[data-action="reset-all"]').disabled = !history.canUndo || imageBusy;
     $('.ve-draft').textContent = history.canUndo ? '未保存' : '草稿';
+    $$('.ve-image-card button, .ve-image-card input').forEach(el => el.disabled = imageBusy);
     renderChanges();
   }
   function updateOutline() {
@@ -133,10 +152,10 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
     getBaseline(targetKey); render();
   }
   function commit(next, label, group = mode) {
-    if (!getBaseline(targetKey)) return;
+    if (imageBusy || !getBaseline(targetKey)) return;
     if (['position','lift'].includes(group) && !getBaseline(targetKey).movable) return;
     state.edits[targetKey] = { values: next, origin: getBaseline(targetKey).origin, changed: [...new Set([...(state.edits[targetKey]?.changed || []), group])] };
-    history.push(state); writeCss(buildEditedCss(state.source, state.edits)); render(); feedback(label);
+    history.push(state); writeCss(composeCss()); render(); feedback(label);
     // Check the property actually won the cascade rather than reporting a fake successful edit.
     hostWin.requestAnimationFrame(() => {
       if (destroyed || !currentTarget) return;
@@ -199,6 +218,73 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
     }
     if (!filtered.length) { const empty = doc.createElement('p'); empty.className = 've-empty'; empty.textContent = notes.length ? '没有找到相关说明。' : '这款美化没有保留下来的 CSS 注释。你仍然可以按部位调整。'; container.append(empty); }
   }
+  function changeImage(resource, url, label) {
+    if (destroyed || saving) return;
+    const clean = validateImageUrl(url);
+    const current = state.images[resource.id] ? imageAssets.get(state.images[resource.id]).url : resource.url;
+    if (clean === current) { feedback('图片链接没有变化。'); return; }
+    if (clean === resource.url) delete state.images[resource.id];
+    else { const key = String(++assetSequence); imageAssets.set(key, { url: clean, label }); state.images[resource.id] = key; }
+    history.push(state); writeCss(composeCss()); render(); renderImages();
+    feedback(`已替换 ${resource.property}，保存后写入当前美化。`);
+  }
+  function renderImages() {
+    const container = $('.ve-images'); container.replaceChildren();
+    if (!resources.length) {
+      const empty = doc.createElement('p'); empty.className = 've-empty';
+      empty.textContent = resourceError || '这款美化没有找到 url(...) 图片。字体、渐变和聊天消息里的图片不会列在这里。';
+      container.append(empty); return;
+    }
+    for (const resource of resources) {
+      const asset = imageAssets.get(state.images[resource.id]);
+      const url = asset?.url || resource.url;
+      const card = doc.createElement('article'); card.className = 've-image-card';
+      const thumb = doc.createElement('div'); thumb.className = 've-image-thumb';
+      const img = doc.createElement('img'); img.alt = `${resource.property} 图片缩略图`; img.loading = 'lazy'; img.referrerPolicy = 'no-referrer';
+      const failed = () => { const tip = doc.createElement('span'); tip.textContent = '缩略图暂不可用，仍可替换链接'; thumb.replaceChildren(tip); };
+      img.onerror = failed; thumb.append(img);
+      try { img.src = new URL(validateImageUrl(url), doc.baseURI).href; } catch { failed(); }
+      const heading = doc.createElement('h3'); heading.textContent = resource.note.split('\n')[0].trim().slice(0, 60) || '美化图片';
+      const note = doc.createElement('p'); note.className = 've-image-note'; note.textContent = resource.note || '作者没有为此图片留下附近说明。'; note.hidden = note.textContent === heading.textContent;
+      const context = doc.createElement('small'); context.textContent = `${resource.property} · 第 ${resource.line} 行 · ${resource.selector || 'CSS 图片'}`;
+      const urlLabel = doc.createElement('label'); urlLabel.className = 've-image-url'; urlLabel.textContent = '图片链接';
+      const input = doc.createElement('input'); input.type = 'text'; input.autocomplete = 'off'; input.spellcheck = false;
+      input.setAttribute('aria-label', `${resource.property} 图片链接`);
+      input.value = /^data:/i.test(url) ? '' : url;
+      input.placeholder = /^data:/i.test(url) ? '已内嵌图片；可粘贴新链接' : '粘贴图片链接或酒馆图片路径';
+      urlLabel.append(input);
+      const actions = doc.createElement('div'); actions.className = 've-image-actions';
+      const apply = doc.createElement('button'); apply.textContent = '替换链接';
+      apply.addEventListener('click', () => {
+        if (imageBusy || saving) return;
+        try { changeImage(resource, input.value, '已替换链接'); } catch (error) { feedback(error.message); }
+      });
+      const album = doc.createElement('button'); album.textContent = '从相册选择';
+      const file = doc.createElement('input'); file.type = 'file'; file.accept = 'image/*'; file.hidden = true;
+      file.setAttribute('aria-label', `${resource.property} 从相册选择`);
+      album.addEventListener('click', () => { if (!imageBusy && !saving) file.click(); });
+      file.addEventListener('change', async () => {
+        const selected = file.files?.[0]; file.value = ''; if (!selected || imageBusy || saving) return;
+        imageBusy = true; render(); feedback('正在处理图片，完成后会自动预览…');
+        try {
+          const result = await embedImage(hostWin, selected);
+          if (destroyed) return;
+          changeImage(resource, result.url, '已内嵌相册图片'); feedback(result.detail + '；保存后写入当前美化。');
+        } catch (error) { if (!destroyed) feedback(error.message); }
+        finally { imageBusy = false; if (!destroyed) render(); }
+      });
+      actions.append(apply, album, file);
+      if (asset) {
+        const reset = doc.createElement('button'); reset.textContent = '还原此图';
+        reset.addEventListener('click', () => { if (imageBusy || saving) return; delete state.images[resource.id]; history.push(state); restoreHistory(state, '已还原这张图片，可撤销。'); });
+        actions.append(reset);
+      }
+      const usage = doc.createElement('p'); usage.className = 've-image-usage';
+      usage.textContent = resource.property.startsWith('--') ? '共享变量：使用这个变量的位置会一起换图。' : '只替换这一处图片，其他位置的同名链接保持原样。';
+      card.append(thumb, heading, context, note, urlLabel, actions, usage); container.append(card);
+    }
+    $$('.ve-image-card button, .ve-image-card input').forEach(el => el.disabled = imageBusy);
+  }
   function renderChanges() {
     const container = $('.ve-changes'); container.replaceChildren();
     for (const [key, edit] of Object.entries(state.edits)) for (const item of edit.changed) {
@@ -208,14 +294,21 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
       value.textContent = item === 'position' ? `X ${edit.values.x} / Y ${edit.values.y} px` : `${prev[item]} → ${edit.values[item]} px`;
       row.append(label, value); container.append(row);
     }
+    for (const [id, asset] of Object.entries(state.images)) {
+      const resource = resources.find(item => item.id === id);
+      const row = doc.createElement('div'); row.className = 've-change';
+      const label = doc.createElement('span'), value = doc.createElement('b');
+      label.textContent = `图片 · ${resource?.property || id}`; value.textContent = imageAssets.get(asset).label;
+      row.append(label, value); container.append(row);
+    }
     if (!container.childNodes.length) { const empty = doc.createElement('p'); empty.className = 've-empty'; empty.textContent = '还没有修改，先去给头像换个圆角吧。'; container.append(empty); }
   }
-  function setPage(page) { $$('[data-page]').forEach(el => el.hidden = el.dataset.page !== page); $$('[data-tab]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.tab === page))); }
-  function restoreHistory(next, message) { state = next; writeCss(buildEditedCss(state.source, state.edits)); render(); feedback(message); }
+  function setPage(page) { currentPage = page; if (page === 'images') renderImages(); $$('[data-page]').forEach(el => el.hidden = el.dataset.page !== page); $$('[data-tab]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.tab === page))); }
+  function restoreHistory(next, message) { state = next; writeCss(composeCss()); render(); if (currentPage === 'images') renderImages(); feedback(message); }
   function makeTheme() { return { ...JSON.parse(JSON.stringify(theme)), custom_css: draft, name: theme.name }; }
   function endHold() { hostWin.clearTimeout(heldTimer); hostWin.clearInterval(heldInterval); }
   async function action(name) {
-    if (saving) return;
+    if (saving || (imageBusy && name !== 'close')) return;
     if (name === 'undo') return restoreHistory(history.undo(), '已撤销上一次调整。');
     if (name === 'redo') return restoreHistory(history.redo(), '已重做。');
     if (name === 'compact') return setCompact(true);
@@ -224,7 +317,7 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
     if (name === 'pick') { picking = true; $('.ve-sheet').hidden = true; $('.ve-controller').hidden = true; $('.ve-pick-hint').hidden = false; return; }
     if (name === 'cancel-pick') return stopPick();
     if (name === 'close') { dispose(true); onClose('已关闭微调，恢复原美化。'); return; }
-    if (name === 'reset-all') { history.push({ source: original, edits: {} }); return restoreHistory({ source: original, edits: {} }, '已还原全部调整，可撤销。'); }
+    if (name === 'reset-all') { history.push({ source: original, edits: {}, images: {} }); return restoreHistory({ source: original, edits: {}, images: {} }, '已还原全部调整，可撤销。'); }
     if (name === 'reset-mode') {
       if (!state.edits[targetKey]) return;
       state.edits[targetKey].changed = state.edits[targetKey].changed.filter(item => item !== mode);
@@ -235,7 +328,7 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
     if (name === 'download') { onDownload(makeTheme()); feedback('已导出主题 JSON，当前仍可继续编辑。'); return; }
     if (name === 'save') {
       const result = makeTheme(); saving = true; endHold(); render(); feedback('正在保存到当前美化…');
-      observer.disconnect(); previewStyle.textContent = ''; host.style.setProperty('display', 'none', 'important');
+      observer.disconnect(); previewStyle.textContent = ''; restoreNativeMedia(); host.style.setProperty('display', 'none', 'important');
       try { await onSave(result, original); dispose(false); onClose(`已保存到当前美化「${result.name}」。`); }
       catch (error) {
         saving = false; host.style.removeProperty('display');
@@ -306,12 +399,13 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
   doc.addEventListener('pointerdown', blockPickFocus, true);
   function dispose() {
     if (destroyed) return; destroyed = true; endHold(); observer.disconnect(); hostWin.cancelAnimationFrame(raf);
-    previewStyle.remove();
+    previewStyle.remove(); restoreNativeMedia();
     doc.removeEventListener('click', pick, true); themeSelect?.removeEventListener('change', themeChanged);
     doc.removeEventListener('pointerdown', blockPickFocus, true);
     hostWin.removeEventListener('pointerup', endHold); hostWin.removeEventListener('pointercancel', endHold); hostWin.removeEventListener('blur', endHold);
     host.remove(); initialFocus?.focus?.();
   }
+  $('.ve-image-count').textContent = resources.length;
   renderNotes(); locate(false); render(); updateOutline(); $('[data-action="close"]').focus({ preventScroll: true });
   return () => dispose(true);
 }

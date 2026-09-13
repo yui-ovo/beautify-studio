@@ -2,6 +2,12 @@
 if (new URLSearchParams(location.search).has('layout-test')) await import('./layout-fixture.js');
 const themes = [
   { name: '林间来信', blur_tint_color: '#c2ccba', custom_css: `/* --- 在这里自定义💙 --- */
+/* 图片可在「图片资源」中替换 */
+:root {
+  --cover-char: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='240'%3E%3Crect width='600' height='240' fill='%23d8dfce'/%3E%3Ccircle cx='460' cy='60' r='36' fill='%23f9f4da'/%3E%3Cpath d='M0 240V190L160 80 330 220 480 130 600 210V240' fill='%238c9e80'/%3E%3C/svg%3E"); /* 角色封面 · 林间山色 */
+  --cover-user: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='240'%3E%3Crect width='600' height='240' fill='%23ddd9cd'/%3E%3Ccircle cx='145' cy='80' r='45' fill='%23f7eee0'/%3E%3Cpath d='M0 170Q150 120 300 180T600 160V240H0' fill='%23aaa89d'/%3E%3C/svg%3E"); /* 用户封面 · 傍晚海岸 */
+}
+.chat-heading { background-image: var(--cover-char); background-size: cover; }
 /* 角色头像圆角：小一点方方的，大一点圆圆的 */
 #chat .mes[is_user="false"] .avatar { border-radius: 6px; }
 /* 我的头像：像一枚小小的邮票 */
