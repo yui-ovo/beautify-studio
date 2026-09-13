@@ -51,9 +51,21 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
     const rgb = cs.borderTopColor.match(/^rgba?\(\s*(\d+)[, ]+\s*(\d+)[, ]+\s*(\d+)/);
     const color = rgb ? '#' + rgb.slice(1, 4).map(value => Number(value).toString(16).padStart(2, '0')).join('') : DEFAULT_VALUES.color;
     const radius = cs.borderTopLeftRadius.endsWith('%') ? number(cs.width, 48) * number(cs.borderTopLeftRadius, 0) / 100 : number(cs.borderTopLeftRadius, 0);
+    let composerOrigin = {};
+    if (key === 'composer') {
+      const probe = doc.createElement('span');
+      probe.style.cssText = 'all:initial!important;position:fixed!important;visibility:hidden!important;pointer-events:none!important;padding-bottom:var(--tt-inset-bottom, env(safe-area-inset-bottom, 0px))!important;';
+      doc.body.append(probe);
+      const inset = number(hostWin.getComputedStyle(probe).paddingBottom, 0);
+      probe.remove();
+      const paddingBottom = number(cs.paddingBottom, 0);
+      const isTauri = Boolean(hostWin.__TAURITAVERN__ || hostWin.__TAURI_INTERNALS__);
+      const safeAware = isTauri && (Math.abs(paddingBottom - inset) < 1 || /padding-bottom:\s*max\(0px,\s*calc\(var\(--tt-inset-bottom/.test(original));
+      composerOrigin = { paddingBottom, safeAware, paddingAdjustment: paddingBottom - inset };
+    }
     baseline[key] = {
       values: { ...DEFAULT_VALUES, size: Math.round(number(cs.width, 48)), radius: Math.round(radius), border: Math.round(number(cs.borderTopWidth, 0)), color },
-      origin: { x: movable ? parseFloat(parts[0]) : 0, y: movable ? parseFloat(parts[1] || '0') : 0 }, movable,
+      origin: { x: movable ? parseFloat(parts[0]) : 0, y: movable ? parseFloat(parts[1] || '0') : 0, ...composerOrigin }, movable,
     };
     return baseline[key];
   }
@@ -64,13 +76,20 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
     size: { title: '大小', help: '宽高一起调整，头像保持正方形。', min: 16, max: 200 },
     radius: { title: '圆角', help: '数值越大，头像的边角越圆。', min: 0, max: 100 },
     border: { title: '边框', help: '调整边框粗细；设为 0 就是没有边框。', min: 0, max: 12 },
+    lift: { title: '上下位置', help: '0 是原位置；正数抬高，负数降低。底栏仍跟随酒馆原有的键盘布局。', min: -120, max: 200 },
+    gap: { title: '底部留白', help: '相对原留白调整：正数增加，负数减少，最少到 0；不会修改系统安全区。', min: -120, max: 200 },
   };
   function render() {
     const v = values(), info = meta[mode], available = Boolean(visibleTarget(targetKey));
+    const composer = targetKey === 'composer';
+    $('.ve-properties').dataset.composer = String(composer);
+    $('.ve-controller').dataset.composer = String(composer);
+    $$('[data-mode]').forEach(el => el.hidden = composer !== ['lift', 'gap'].includes(el.dataset.mode));
+    $('.ve-lift-buttons').hidden = mode !== 'lift';
     $$('[data-target]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.target === targetKey)));
     $$('[data-mode]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.mode === mode)));
     $('.ve-scope').firstChild.textContent = `作用于${TARGETS[targetKey].scope} `;
-    $('.ve-property-title').textContent = `头像${info.title}`;
+    $('.ve-property-title').textContent = composer ? `底栏${info.title}` : `头像${info.title}`;
     $('.ve-controller-title').textContent = `${TARGETS[targetKey].name} · ${info.title}`;
     $('.ve-help').textContent = info.help;
     $('.ve-controller-caption').textContent = mode === 'position' ? `X ${v.x} / Y ${v.y} px` : info.help;
@@ -85,7 +104,7 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
     $('.ve-color').value = v.color;
     $$('[data-action="undo"]').forEach(el => el.disabled = !history.canUndo);
     $('[data-action="redo"]').disabled = !history.canRedo;
-    $$('[data-nudge], [data-direction], .ve-number, .ve-range, .ve-x, .ve-y, .ve-color').forEach(el => el.disabled = !available || (mode === 'position' && !getBaseline(targetKey)?.movable));
+    $$('[data-nudge], [data-direction], [data-lift], .ve-number, .ve-range, .ve-x, .ve-y, .ve-color').forEach(el => el.disabled = !available || (['position', 'lift'].includes(mode) && !getBaseline(targetKey)?.movable));
     $('[data-action="save"]').disabled = !history.canUndo || saving;
     $('[data-action="download"]').disabled = !history.canUndo || saving;
     $('[data-action="reset-all"]').disabled = !history.canUndo;
@@ -110,18 +129,20 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
   function locate(scroll = true) {
     currentTarget = visibleTarget(targetKey);
     if (!currentTarget) { feedback(`当前画面没有${TARGETS[targetKey].name}，请打开一段含这类消息的聊天。`); return; }
-    if (scroll) currentTarget.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    if (scroll && targetKey !== 'composer') currentTarget.scrollIntoView({ block: 'center', behavior: 'smooth' });
     getBaseline(targetKey); render();
   }
   function commit(next, label, group = mode) {
     if (!getBaseline(targetKey)) return;
+    if (['position','lift'].includes(group) && !getBaseline(targetKey).movable) return;
     state.edits[targetKey] = { values: next, origin: getBaseline(targetKey).origin, changed: [...new Set([...(state.edits[targetKey]?.changed || []), group])] };
     history.push(state); writeCss(buildEditedCss(state.source, state.edits)); render(); feedback(label);
     // Check the property actually won the cascade rather than reporting a fake successful edit.
     hostWin.requestAnimationFrame(() => {
       if (destroyed || !currentTarget) return;
       const cs = hostWin.getComputedStyle(currentTarget);
-      const expected = mode === 'size' ? [cs.width, next.size] : mode === 'radius' ? [cs.borderTopLeftRadius, next.radius] : mode === 'border' ? [cs.borderTopWidth, next.border] : null;
+      const origin = getBaseline(targetKey).origin;
+      const expected = mode === 'size' ? [cs.width, next.size] : mode === 'radius' ? [cs.borderTopLeftRadius, next.radius] : mode === 'border' ? [cs.borderTopWidth, next.border] : mode === 'lift' ? [cs.translate.split(/\s+/)[1] || '0', origin.y - next.lift] : mode === 'gap' ? [cs.paddingBottom, Math.max(0, origin.paddingBottom + next.gap)] : null;
       if (expected && Math.abs(parseFloat(expected[0]) - expected[1]) > 1) feedback('有其他样式影响了效果；可撤销本次调整并查看作者说明。');
     });
   }
@@ -134,7 +155,7 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
   }
   function setCompact(value) {
     compact = value; $('.ve-sheet').hidden = value; $('.ve-controller').hidden = !value;
-    if (!value) { $('.ve-controller').style.left = ''; $('.ve-controller').style.top = ''; }
+    if (!value) $('.ve-controller').style.cssText = '';
     render();
   }
   function stopPick() { picking = false; $('.ve-pick-hint').hidden = true; $('.ve-controller').hidden = !compact; $('.ve-sheet').hidden = compact; }
@@ -142,9 +163,12 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
     if (!picking || event.composedPath().includes(host)) return;
     event.preventDefault(); event.stopImmediatePropagation();
     const avatar = event.target.closest?.('#chat .mes .avatar');
-    if (!avatar) { feedback('请点聊天消息旁边的头像。'); return; }
-    targetKey = avatar.closest('.mes').getAttribute('is_user') === 'true' ? 'user' : 'character';
-    currentTarget = avatar; getBaseline(targetKey); compact = true; stopPick(); render(); feedback(`已选中${TARGETS[targetKey].name}，调整作用于${TARGETS[targetKey].scope}。`);
+    const composer = event.target.closest?.('#form_sheld');
+    if (!avatar && !composer) { feedback('请点聊天头像或底部输入栏。'); return; }
+    targetKey = composer ? 'composer' : avatar.closest('.mes').getAttribute('is_user') === 'true' ? 'user' : 'character';
+    mode = composer ? 'lift' : 'radius';
+    $('.ve-controller').style.cssText = '';
+    currentTarget = composer || avatar; getBaseline(targetKey); compact = true; stopPick(); render(); feedback(`已选中${TARGETS[targetKey].name}，调整作用于${TARGETS[targetKey].scope}。`);
   }
   function renderNotes(query = '') {
     const container = $('.ve-notes'); container.replaceChildren();
@@ -166,6 +190,8 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
         button.addEventListener('click', () => {
           if (/is_user\s*=\s*["']?true/.test(note.selector)) targetKey = 'user';
           else if (/is_user\s*=\s*["']?false/.test(note.selector)) targetKey = 'character';
+          else if (targetKey === 'composer') targetKey = 'character';
+          if (['lift', 'gap'].includes(mode)) mode = 'radius';
           setPage('parts'); locate();
         }); card.append(button);
       }
@@ -222,20 +248,21 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
   root.addEventListener('click', event => {
     const button = event.target.closest('button'); if (!button || button.disabled || saving) return;
     if (button.dataset.action) { void action(button.dataset.action); return; }
-    if (button.dataset.target) { targetKey = button.dataset.target; locate(); render(); feedback(`已选中${TARGETS[targetKey].name}。`); }
+    if (button.dataset.target) { targetKey = button.dataset.target; mode = targetKey === 'composer' ? 'lift' : ['lift','gap'].includes(mode) ? 'radius' : mode; locate(); render(); feedback(`已选中${TARGETS[targetKey].name}。`); }
     if (button.dataset.mode) { mode = button.dataset.mode; render(); }
     if (button.dataset.tab) setPage(button.dataset.tab);
     if (button.dataset.step) { step = Number(button.dataset.step); $$('[data-step]').forEach(el => el.setAttribute('aria-pressed', String(Number(el.dataset.step) === step))); }
     if (button === heldButton && Date.now() < heldUntil) { heldButton = null; return; }
     if (button.dataset.nudge) nudge(button.dataset.nudge === 'plus' ? 1 : -1);
+    if (button.dataset.lift) nudge(button.dataset.lift === 'up' ? 1 : -1);
     if (button.dataset.direction) move(button.dataset.direction);
   });
   root.addEventListener('pointerdown', event => {
-    const button = event.target.closest('[data-nudge], [data-direction]'); if (!button || button.disabled) return;
+    const button = event.target.closest('[data-nudge], [data-direction], [data-lift]'); if (!button || button.disabled) return;
     heldButton = null; endHold();
     heldTimer = hostWin.setTimeout(() => {
       heldButton = button;
-      const repeat = () => { heldUntil = Date.now() + 600; button.dataset.nudge ? nudge(button.dataset.nudge === 'plus' ? 1 : -1) : move(button.dataset.direction); };
+      const repeat = () => { heldUntil = Date.now() + 600; button.dataset.lift ? nudge(button.dataset.lift === 'up' ? 1 : -1) : button.dataset.nudge ? nudge(button.dataset.nudge === 'plus' ? 1 : -1) : move(button.dataset.direction); };
       repeat(); heldInterval = hostWin.setInterval(repeat, 100);
     }, 380);
   });
@@ -266,16 +293,22 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
     if (event.target.matches('input,textarea')) return;
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); void action(event.shiftKey ? 'redo' : 'undo'); }
     if (compact && mode === 'position' && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key)) { event.preventDefault(); move(event.key.slice(5).toLowerCase()); }
+    if (compact && mode === 'lift' && ['ArrowUp','ArrowDown'].includes(event.key)) { event.preventDefault(); nudge(event.key === 'ArrowUp' ? 1 : -1); }
   }
   root.addEventListener('keydown', keyboard);
   const themeSelect = doc.querySelector('#themes');
   function themeChanged() { if (!saving) { dispose(true); onClose('已切换主题，微调预览已结束。'); } }
   themeSelect?.addEventListener('change', themeChanged);
   doc.addEventListener('click', pick, true);
+  function blockPickFocus(event) {
+    if (picking && !event.composedPath().includes(host)) event.preventDefault();
+  }
+  doc.addEventListener('pointerdown', blockPickFocus, true);
   function dispose() {
     if (destroyed) return; destroyed = true; endHold(); observer.disconnect(); hostWin.cancelAnimationFrame(raf);
     previewStyle.remove();
     doc.removeEventListener('click', pick, true); themeSelect?.removeEventListener('change', themeChanged);
+    doc.removeEventListener('pointerdown', blockPickFocus, true);
     hostWin.removeEventListener('pointerup', endHold); hostWin.removeEventListener('pointercancel', endHold); hostWin.removeEventListener('blur', endHold);
     host.remove(); initialFocus?.focus?.();
   }

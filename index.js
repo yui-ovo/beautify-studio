@@ -4150,7 +4150,7 @@ var require_postcss = __commonJS({
 });
 
 // src/config.js
-var VERSION = "1.1.0";
+var VERSION = "1.2.0";
 var BUTTON_NAME = "美化工作室";
 var STORAGE_KEY = "tt-theme-helper-options-v2";
 var OVERLAY_HOST_ID = "tt-theme-helper-overlay-host";
@@ -4920,7 +4920,7 @@ function panelMarkup(detected) {
       <div class="body">
         <div class="masthead"><span>YOUR THEME, YOUR WAY</span><span>${star} THE STUDIO ${star}</span><span>MADE FOR TAVERN</span></div>
         <div class="intro"><span class="connection" data-connected="${detected}"><i></i>${detected ? "TauriTavern 已连接" : "美化适配工作台"}</span></div>
-        <button class="visual-edit" type="button"><span>✥</span><div><b>可视化微调</b><small>点选当前美化的头像，用手柄边看边调</small></div><span>体验新版 ↗</span></button>
+        <button class="visual-edit" type="button"><span>✥</span><div><b>可视化微调</b><small>点选头像或底部输入栏，用手柄边看边调</small></div><span>体验新版 ↗</span></button>
         <div class="workspace">
           <section class="source-section">
             <div class="section-heading"><h3><span>01</span> 选择美化</h3><span class="caption">THE COLLECTION</span></div>
@@ -5140,6 +5140,10 @@ h3 { font-size:15px; font-weight:600; }
 .visual-editor *{box-sizing:border-box}.visual-editor [hidden]{display:none!important}.visual-editor button,.visual-editor input{font:inherit}.visual-editor button{cursor:pointer;color:inherit;border:0;background:none}.visual-editor button:disabled{opacity:.35;cursor:default}.visual-editor button:focus-visible,.visual-editor input:focus-visible,.visual-editor summary:focus-visible{outline:2px solid #62735e;outline-offset:3px}.visual-editor input{color:inherit}.visual-editor button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}.ve-masthead{position:fixed;top:0;left:0;right:0;height:58px;background:rgba(250,251,248,.94);border-bottom:1px solid var(--ve-line);display:flex;align-items:center;justify-content:space-between;padding:0 30px;pointer-events:auto}.ve-brand{display:flex;align-items:center;gap:10px;font-size:22px}.ve-brand b{font-size:14px;font-weight:600}.ve-brand i{font:10px Georgia,serif;letter-spacing:2px;color:#8a8e87;margin-left:14px}.ve-live{font-size:11px;color:#687762;display:flex;align-items:center;gap:7px}.ve-live i{width:6px;height:6px;border-radius:50%;background:#73886d;box-shadow:0 0 0 4px #e7ede2}.ve-sheet{position:fixed;left:24px;top:80px;bottom:24px;width:392px;max-height:900px;display:flex;flex-direction:column;background:#fafbf8;border:1px solid #fff;border-radius:22px;box-shadow:0 18px 65px #29352718,0 0 0 1px #d8ddd550;pointer-events:auto;overflow:hidden}.ve-sheet-head{display:flex;align-items:flex-start;justify-content:space-between;padding:22px 22px 16px}.ve-eyebrow{font:9px ui-monospace,monospace;letter-spacing:2px;color:#8b9288}.ve-sheet-head h1{font-size:19px;letter-spacing:-.7px;margin:9px 0 0;font-weight:550}.ve-sheet-head h1 span{display:inline-block;margin-left:9px;color:#9ca894;font-size:24px}.ve-icon{flex:none;width:38px;height:38px;border:1px solid var(--ve-line)!important;border-radius:11px!important;background:#fff8!important;font-size:21px!important}.ve-sheet-head .ve-icon{border:0!important;width:25px;height:28px;font-size:26px!important;color:#8b9089}.ve-theme{margin:0 22px 18px;padding:12px;display:flex;gap:10px;align-items:center;background:linear-gradient(115deg,#e7ebe4,#f2f3ef);border:1px solid #dde2d7;border-radius:12px}.ve-theme-icon{display:grid;place-items:center;width:37px;height:37px;background:#fcfdf9;border:1px solid #d2d8ca;border-radius:9px;font-size:23px;color:#76856d}.ve-theme div{flex:1}.ve-theme small{display:block;font-size:10px;color:#818979}.ve-theme b{font-size:13px;font-weight:550}.ve-draft{border:1px solid #c9d2c1;border-radius:5px;padding:1px 6px;color:#74826c;font-size:10px}.ve-tabs{display:flex;margin:0 22px;border-bottom:1px solid var(--ve-line);gap:22px}.ve-tabs button{position:relative;padding:0 0 12px;font-size:12px;color:#92978f;white-space:nowrap}.ve-tabs button[aria-pressed=true]{color:#343c30;font-weight:600}.ve-tabs button[aria-pressed=true]:after{content:"";position:absolute;height:2px;background:#56664b;bottom:-1px;left:0;right:0}.ve-note-count{font-size:10px;border-radius:4px;background:#e9ece5;padding:0 4px}.ve-scroll{overflow-y:auto;overscroll-behavior:contain;padding:20px 22px 16px;min-height:0;flex:1;scrollbar-width:thin;scrollbar-color:#d3dacf transparent}.ve-section-label{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#686e64;margin-bottom:12px}.ve-text{font-size:11px!important;color:#66775a!important;padding:3px 0}.ve-dim{color:#a1a59b;font-size:10px}.ve-targets{display:grid;grid-template-columns:1fr 1fr;gap:10px}.ve-targets>button{position:relative;text-align:left;border:1px solid var(--ve-line);border-radius:12px;padding:14px;background:#f5f6f2}.ve-targets>button[aria-pressed=true]{border-color:#7c8f71;background:#eef2e9;box-shadow:inset 0 0 0 1px #7c8f7130}.ve-targets>button>span{font-size:24px;color:#87957b;display:block;line-height:1;margin-bottom:13px}.ve-targets b{font-size:12px;display:block;font-weight:550}.ve-targets small{display:block;color:#949b8e;font-size:10px;margin-top:3px}.ve-targets i{position:absolute;right:12px;top:10px;font-style:normal;color:#8e9c82}.ve-scope{display:flex;align-items:center;justify-content:space-between;margin:9px 0 20px;font-size:10px;color:#8b9284}.ve-properties{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px}.ve-properties button{border:1px solid var(--ve-line);border-radius:9px;padding:9px 4px;color:#959b8e;font-size:20px}.ve-properties button span{display:block;font-size:11px;margin-top:2px}.ve-properties button[aria-pressed=true]{background:#e9eee2;border-color:#c2cbb7;color:#566648}.ve-value-card{padding:14px 15px 12px;border:1px solid var(--ve-line);border-radius:12px;background:#fff9}.ve-value-title{display:flex;justify-content:space-between;align-items:center;font-size:11px}.ve-value-title b{font-weight:550}.ve-unit{font:9px ui-monospace,monospace;color:#a3aa9a;letter-spacing:2px}.ve-scalar{display:flex;align-items:center;justify-content:space-between;margin:14px 0 11px}.ve-scalar>button,.ve-controller-scalar>button{height:40px;width:44px;border:1px solid #dbe0d5;border-radius:10px;background:#f1f4ec;font-size:21px}.ve-scalar label{display:flex;align-items:baseline;justify-content:center;gap:4px}.ve-number{width:76px;font:32px/1.2 Georgia,serif!important;border:0;background:transparent;text-align:center;appearance:textfield;-moz-appearance:textfield}.ve-number::-webkit-inner-spin-button{appearance:none}.ve-scalar label span{font-size:11px;color:#a1a894}.ve-range{width:100%;height:14px;accent-color:#7c8f6e;cursor:pointer}.ve-help{margin:7px 0 0;font-size:10px;color:#959c8d;line-height:1.6}.ve-handheld{display:flex;gap:12px;align-items:center;width:100%;border:1px solid #d6ddce!important;border-radius:12px;padding:13px!important;background:#edf1e6!important;margin-top:12px;text-align:left}.ve-handheld>span{font-size:23px;color:#7c8c6f}.ve-handheld>span:last-child{font-size:19px}.ve-handheld div{flex:1}.ve-handheld b{display:block;font-size:12px;font-weight:550}.ve-handheld small{display:block;font-size:10px;color:#909b85;margin-top:3px}.ve-coming{margin-top:17px;display:flex;align-items:center;gap:8px;color:#a1a799;font-size:10px}.ve-coming>span{border:1px solid #dde2d6;border-radius:4px;padding:0 4px;font-size:9px}.ve-coming small{margin-left:auto;font-size:9px}.ve-footer{padding:10px 22px 16px;border-top:1px solid var(--ve-line);background:#f6f8f1}.ve-feedback{font-size:10px;color:#7f8b73;min-height:16px;margin:0 0 10px}.ve-footer-actions{display:flex;gap:7px;align-items:center}.ve-footer-actions .ve-icon{height:37px;width:35px;font-size:19px!important}.ve-export{font-size:11px!important;padding:8px!important;white-space:nowrap}.ve-save{flex:1;background:#384331!important;color:#fff!important;border-radius:9px;padding:10px 8px!important;font-size:12px!important;white-space:nowrap}.ve-footer>small{display:block;text-align:center;font-size:9px;letter-spacing:1px;color:#a5ad9c;margin-top:11px}.ve-position-values{display:flex;gap:12px;margin:16px 0}.ve-position-values label{flex:1;color:#8b977e;font-size:11px}.ve-position-values input{display:block;width:100%;padding:7px;border:1px solid #d8dfd0;border-radius:7px;background:#f8faf4;margin-top:5px}.ve-color-row{display:flex;align-items:center;justify-content:space-between;font-size:11px;margin-top:7px}.ve-color{height:28px;width:40px;padding:2px;border:1px solid #d3dcc8;border-radius:5px;background:transparent}.ve-outline{position:fixed;border:1.5px solid #849574;border-radius:13px;pointer-events:none;box-shadow:0 0 0 3px #fcfff955;transition:width .08s,height .08s}.ve-outline:before,.ve-outline:after{content:"";position:absolute;width:5px;height:5px;background:#fafcf5;border:1px solid #849574;top:-3px}.ve-outline:before{left:-3px}.ve-outline:after{right:-3px}.ve-outline>span{position:absolute;left:-1px;top:-24px;background:#69795b;color:white;border-radius:4px;font-size:10px;white-space:nowrap;padding:2px 7px;box-shadow:0 1px 4px #0001}.ve-controller{position:fixed;width:296px;bottom:34px;left:calc(50% - 148px);border:1px solid #fff;border-radius:19px;background:#f8faf4f5;box-shadow:0 12px 65px #25301930,0 0 0 1px #dce3d580;pointer-events:auto;padding:14px 15px 10px;backdrop-filter:blur(18px)}.ve-controller-head{display:flex;align-items:center;gap:7px;font-size:12px}.ve-controller-head>.ve-text{margin-left:auto}.ve-grip{font-size:21px;color:#a3ae97;cursor:grab;touch-action:none;padding:0 5px}.ve-controller-title{font-weight:550}.ve-mini-modes{display:flex;background:#e9eee1;border-radius:7px;padding:3px;margin-top:12px}.ve-mini-modes button{font-size:10px;flex:1;border-radius:5px;padding:5px}.ve-mini-modes button[aria-pressed=true]{background:#fcfff6;color:#4c5e3c;box-shadow:0 1px 3px #0001}.ve-controller-body{padding:13px 0 8px}.ve-controller-scalar{display:flex;align-items:center;justify-content:space-around}.ve-controller-scalar>span{text-align:center;min-width:65px}.ve-mini-value{font:34px Georgia,serif}.ve-controller-scalar small{font-size:10px;margin-left:3px;color:#939f86}.ve-controller-caption{text-align:center;font-size:10px;color:#89967d;margin-top:10px}.ve-controller-foot{display:flex;align-items:center;gap:6px;border-top:1px solid #dfe5d6;padding-top:10px;font-size:10px;color:#9ca68f}.ve-controller-foot button{border:1px solid #dfe5d7;border-radius:6px;padding:5px 8px;font-size:10px;color:#6e7c60}.ve-controller-foot [aria-pressed=true]{background:#e5ecdb;border-color:#bdc9af}.ve-controller-foot .ve-done{margin-left:auto;background:#49563e;color:#fff;border-color:#49563e}.ve-mini-status{font-size:9px;color:#89957e;margin-top:6px;line-height:1.4}.ve-dpad{display:grid;grid-template-columns:44px 44px 44px;grid-template-rows:36px 36px 36px;gap:4px;justify-content:center}.ve-dpad button{border:1px solid #d8e1cd;border-radius:9px;background:#edf2e6;font-size:20px}.ve-dpad button:nth-child(1){grid-column:2}.ve-dpad button:nth-child(2){grid-column:1;grid-row:2}.ve-dpad button:nth-child(3){grid-column:2;grid-row:2;color:#91a07f;font-size:18px}.ve-dpad button:nth-child(4){grid-column:3;grid-row:2}.ve-dpad button:nth-child(5){grid-column:2;grid-row:3}.ve-description{margin:0 0 16px;font-size:12px;color:#7e8973;line-height:1.8}.ve-search{display:flex;border:1px solid #d9e0d1;border-radius:9px;background:#f4f7ee;align-items:center;padding:8px 10px;gap:8px;margin-bottom:16px}.ve-search input{font-size:11px;background:transparent;border:0;outline:none;width:100%}.ve-search>span{color:#839174;font-size:19px}.ve-note{border:1px solid #dce2d4;border-radius:10px;background:#fffffc;padding:14px;margin-bottom:10px}.ve-note>small{font:9px ui-monospace,monospace;color:#a0aa94}.ve-note>p{margin:8px 0;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}.ve-note summary{font-size:10px;color:#879778;cursor:pointer}.ve-note pre{font:10px/1.6 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;background:#eef3e7;border-radius:5px;padding:8px;color:#68785a}.ve-note>.ve-text{margin-top:8px}.ve-change{padding:14px 0;border-bottom:1px solid #e1e7d9;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px}.ve-change b{font:12px ui-monospace,monospace;color:#738763}.ve-empty{padding:35px 15px;color:#969f8b;font-size:12px;text-align:center;line-height:2}.ve-reset-all{margin-top:20px;width:100%;border:1px solid #dae3cf!important;border-radius:9px;padding:10px!important;font-size:11px!important;color:#859576!important}.ve-pick-hint{position:fixed;top:76px;left:50%;transform:translateX(-50%);background:#3b4931;color:#fff;padding:12px 17px;border-radius:30px;pointer-events:auto;font-size:12px;white-space:nowrap;box-shadow:0 5px 25px #27311b30}.ve-pick-hint button{color:#d6e6c4!important;margin-left:15px;font-size:11px;border-left:1px solid #8a9d7670;padding-left:14px}
 @media(max-width:700px){.ve-masthead{height:49px;padding:0 17px}.ve-brand{font-size:20px}.ve-brand b{font-size:13px}.ve-brand i{display:none}.ve-live{font-size:10px}.ve-sheet{left:8px;right:8px;width:auto;top:auto;bottom:max(8px,env(safe-area-inset-bottom));height:min(610px,72dvh);border-radius:21px;max-height:calc(100dvh - 70px)}.ve-sheet-head{padding:16px 18px 10px}.ve-sheet-head h1{font-size:17px;margin-top:4px}.ve-eyebrow{font-size:8px}.ve-theme{margin:0 18px 12px;padding:8px 10px}.ve-theme-icon{width:30px;height:30px;font-size:20px}.ve-tabs{margin:0 18px;gap:25px}.ve-tabs button{padding-bottom:9px;font-size:11px}.ve-scroll{padding:14px 18px}.ve-targets>button{padding:10px 12px}.ve-targets>button>span{font-size:20px;margin-bottom:7px}.ve-targets small{display:none}.ve-scope{margin:6px 0 14px}.ve-properties button{padding:6px;font-size:18px}.ve-value-card{padding:10px 12px}.ve-scalar{margin:9px 0}.ve-handheld{padding:10px!important}.ve-coming{margin-top:12px}.ve-footer{padding:8px 18px 11px}.ve-feedback{margin-bottom:7px}.ve-footer>small{margin-top:7px}.ve-controller{bottom:max(18px,env(safe-area-inset-bottom));width:280px;left:calc(50% - 140px)}.ve-pick-hint{top:65px;font-size:11px}.ve-outline>span{font-size:9px}.ve-number{font-size:28px!important}}
 @media(prefers-reduced-motion:reduce){.visual-editor *{transition:none!important;scroll-behavior:auto!important}}
+
+/* Compact heading and consistent curved undo/redo icons. */
+.ve-sheet-head{align-items:center;padding-bottom:10px}.ve-sheet-head .ve-icon{display:grid;place-items:center}.ve-footer-actions .ve-icon,.ve-controller-foot [data-action="undo"]{display:grid;place-items:center;border-radius:50%!important}.visual-editor .ve-history-icon{width:21px;height:21px;display:block}.ve-controller-foot .ve-history-icon{width:17px;height:17px}.ve-composer-target{grid-column:1/-1;display:grid;grid-template-columns:30px 1fr;column-gap:9px;align-items:center}.ve-targets .ve-composer-target>span{grid-row:1/3;margin:0;font-size:23px}.ve-composer-target b,.ve-composer-target small{grid-column:2}.ve-properties[data-composer="true"]{grid-template-columns:repeat(2,1fr)}.ve-lift-buttons{display:flex;gap:7px;margin-bottom:12px}.ve-lift-buttons button{flex:1;border:1px solid #d6dfcc;border-radius:9px;padding:9px 5px;background:#edf2e6;font-size:12px}.ve-lift-buttons button:nth-child(2){flex:0 0 35px}.ve-controller[data-composer="true"]{bottom:auto;top:85px}.ve-controller[data-composer="true"] .ve-controller-caption{line-height:1.7}.ve-sheet-head .ve-eyebrow{font-size:10px}.ve-help{font-size:11px}.ve-history-icon path{pointer-events:none}
+@media(max-width:700px){.ve-targets .ve-composer-target small{display:block}.ve-sheet-head{padding:12px 18px 9px}.ve-controller[data-composer="true"]{top:65px;bottom:auto}.ve-sheet-head .ve-icon{height:25px}}
 `;
 
 // node_modules/postcss/lib/postcss.mjs
@@ -5175,9 +5179,10 @@ var EDIT_START = "/* === BEAUTIFY_VISUAL_START === */";
 var EDIT_END = "/* === BEAUTIFY_VISUAL_END === */";
 var TARGETS = {
   character: { name: "角色头像", scope: "全部角色消息", selector: '#chat .mes[is_user="false"] .avatar', icon: "✧" },
-  user: { name: "我的头像", scope: "全部用户消息", selector: '#chat .mes[is_user="true"] .avatar', icon: "◎" }
+  user: { name: "我的头像", scope: "全部用户消息", selector: '#chat .mes[is_user="true"] .avatar', icon: "◎" },
+  composer: { name: "底部输入栏", scope: "输入框与底栏按钮", selector: "#form_sheld", icon: "▤" }
 };
-var DEFAULT_VALUES = { x: 0, y: 0, size: 48, radius: 12, border: 0, color: "#727c73" };
+var DEFAULT_VALUES = { x: 0, y: 0, size: 48, radius: 12, border: 0, color: "#727c73", lift: 0, gap: 0 };
 function parseSource(css) {
   const root2 = postcss_default.parse(String(css || ""));
   const comments = [];
@@ -5194,7 +5199,7 @@ function parseSource(css) {
   return comments;
 }
 function stepValue(values, property, delta) {
-  const bounds = { x: [-300, 300], y: [-300, 300], size: [16, 200], radius: [0, 100], border: [0, 12] };
+  const bounds = { x: [-300, 300], y: [-300, 300], size: [16, 200], radius: [0, 100], border: [0, 12], lift: [-120, 200], gap: [-120, 200] };
   const [min, max] = bounds[property];
   return { ...values, [property]: Math.min(max, Math.max(min, Math.round((values[property] + delta) * 10) / 10)) };
 }
@@ -5204,6 +5209,19 @@ function buildEditedCss(source, edits) {
     const target = TARGETS[key];
     if (!target) continue;
     const { values: v, changed, origin = { x: 0, y: 0 } } = edit;
+    if (key === "composer") {
+      const css = [];
+      if (changed.includes("lift")) css.push(`translate: ${origin.x}px ${origin.y - v.lift}px !important;`);
+      if (changed.includes("gap")) {
+        const base = origin.safeAware ? `var(--tt-inset-bottom, env(safe-area-inset-bottom, 0px)) + ${origin.paddingAdjustment || 0}px` : `${origin.paddingBottom || 0}px`;
+        css.push(`padding-bottom: max(0px, calc(${base} + ${v.gap}px)) !important;`);
+      }
+      if (css.length) rules.push(`/* 底部输入栏 · 正数抬高 / 增加留白；负数降低 / 减少留白 */
+html body #form_sheld#form_sheld#form_sheld {
+  ${css.join("\n  ")}
+}`);
+      continue;
+    }
     const declarations = [];
     if (changed.includes("position")) declarations.push(`translate: ${origin.x + v.x}px ${origin.y + v.y}px !important;`);
     if (changed.includes("size")) declarations.push(`width: ${v.size}px !important; height: ${v.size}px !important; min-width: ${v.size}px !important; max-width: ${v.size}px !important; max-height: ${v.size}px !important; flex-shrink: 0 !important;`);
@@ -5254,32 +5272,33 @@ function createHistory(initial) {
 }
 
 // src/ui/editor-markup.js
+var historyIcon = (redo = false) => `<svg class="ve-history-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"${redo ? ' style="transform:scaleX(-1)"' : ""}><path d="M4 10a8 8 0 1 1 2 9M4 4v6h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 function editorMarkup() {
   return `<div class="visual-editor">
     <header class="ve-masthead"><span class="ve-brand">✦ <b>美化工作室</b><i>BEAUTIFY STUDIO</i></span><span class="ve-live"><i></i> 实时预览</span></header>
     <div class="ve-outline" hidden><span></span></div>
-    <div class="ve-pick-hint" hidden>点一下聊天中的头像 <button data-action="cancel-pick">取消</button></div>
+    <div class="ve-pick-hint" hidden>点一下头像或底部输入栏 <button data-action="cancel-pick">取消</button></div>
     <section class="ve-sheet" aria-label="可视化美化编辑器">
-      <div class="ve-sheet-head"><div><span class="ve-eyebrow">MAKE IT YOURS / 01</span><h1>一点点，调成喜欢的样子<span>✳</span></h1></div><button class="ve-icon" data-action="close" aria-label="关闭并放弃修改">×</button></div>
+      <div class="ve-sheet-head"><div><span class="ve-eyebrow">MAKE IT YOURS / 01</span></div><button class="ve-icon" data-action="close" aria-label="关闭并放弃修改">×</button></div>
       <div class="ve-theme"><span class="ve-theme-icon">◈</span><div><small>正在编辑 · 当前美化</small><b class="ve-theme-name"></b></div><span class="ve-draft">草稿</span></div>
       <nav class="ve-tabs" aria-label="编辑内容"><button data-tab="parts" aria-pressed="true">按部位调整</button><button data-tab="notes" aria-pressed="false">作者说明 <span class="ve-note-count">0</span></button><button data-tab="changes" aria-pressed="false">修改记录</button></nav>
       <div class="ve-scroll">
         <div data-page="parts">
           <div class="ve-section-label"><span>01 / 选一个部位</span><button class="ve-text" data-action="pick">⌖ 去屏幕上点选</button></div>
-          <div class="ve-targets"><button data-target="character" aria-pressed="true"><span>✧</span><b>角色头像</b><small>聊天里的 TA</small><i>↗</i></button><button data-target="user" aria-pressed="false"><span>◎</span><b>我的头像</b><small>聊天里的我</small><i>↗</i></button></div>
+          <div class="ve-targets"><button data-target="character" aria-pressed="true"><span>✧</span><b>角色头像</b><small>聊天里的 TA</small><i>↗</i></button><button data-target="user" aria-pressed="false"><span>◎</span><b>我的头像</b><small>聊天里的我</small><i>↗</i></button><button class="ve-composer-target" data-target="composer" aria-pressed="false"><span>▤</span><b>底部输入栏</b><small>上下位置 · 底部留白</small><i>↗</i></button></div>
           <p class="ve-scope">作用于全部角色消息 <button class="ve-text" data-action="locate">定位 ↗</button></p>
           <div class="ve-section-label"><span>02 / 想调整什么</span><span class="ve-dim">所见即所得</span></div>
-          <div class="ve-properties"><button data-mode="position" aria-pressed="false">✥<span>位置</span></button><button data-mode="size" aria-pressed="false">↗<span>大小</span></button><button data-mode="radius" aria-pressed="true">▢<span>圆角</span></button><button data-mode="border" aria-pressed="false">◉<span>边框</span></button></div>
+          <div class="ve-properties"><button data-mode="position" aria-pressed="false">✥<span>位置</span></button><button data-mode="size" aria-pressed="false">↗<span>大小</span></button><button data-mode="radius" aria-pressed="true">▢<span>圆角</span></button><button data-mode="border" aria-pressed="false">◉<span>边框</span></button><button data-mode="lift" hidden>↕<span>上下位置</span></button><button data-mode="gap" hidden>▥<span>底部留白</span></button></div>
           <div class="ve-value-card"><div class="ve-value-title"><b class="ve-property-title">头像圆角</b><span class="ve-unit">PX</span></div><div class="ve-scalar"><button data-nudge="minus" aria-label="减小数值">−</button><label><input class="ve-number" type="number" min="0" max="100" step="1" aria-label="当前数值"><span>px</span></label><button data-nudge="plus" aria-label="增大数值">＋</button></div><div class="ve-position-values" hidden><label>水平 X<input class="ve-x" type="number" min="-300" max="300" aria-label="水平偏移"></label><label>垂直 Y<input class="ve-y" type="number" min="-300" max="300" aria-label="垂直偏移"></label></div><input class="ve-range" type="range" min="0" max="100" aria-label="拖动调整数值"><label class="ve-color-row" hidden>边框颜色<input class="ve-color" type="color" value="#727c73" aria-label="边框颜色"></label><p class="ve-help">数值越大，头像的边角越圆。</p></div>
           <button class="ve-handheld" data-action="compact"><span>✥</span><div><b>打开微调手柄</b><small>收起面板，留更多空间看效果</small></div><span>↗</span></button>
-          <div class="ve-coming"><span>接下来</span> 顶栏 · 输入框 · 消息气泡 <small>逐步开放</small></div>
+          <div class="ve-coming"><span>接下来</span> 顶栏 · 消息气泡 <small>逐步开放</small></div>
         </div>
         <div data-page="notes" hidden><p class="ve-description">美化作者写在 CSS 里的小提示，都收在这里。</p><label class="ve-search"><span>⌕</span><input type="search" placeholder="搜索说明，比如：头像、颜色…" aria-label="搜索作者说明"></label><div class="ve-notes"></div></div>
         <div data-page="changes" hidden><p class="ve-description">每次调整都有迹可循。保存时生成独立副本。</p><div class="ve-changes"></div><button class="ve-reset-all" data-action="reset-all">还原全部调整</button></div>
       </div>
-      <footer class="ve-footer"><div class="ve-feedback" role="status" aria-live="polite">试着把圆角加 1，看看头像的变化。</div><div class="ve-footer-actions"><button class="ve-icon" data-action="undo" aria-label="撤销">↶</button><button class="ve-icon" data-action="redo" aria-label="重做">↷</button><button class="ve-export" data-action="download">导出 JSON</button><button class="ve-save" data-action="save">保存副本 ↗</button></div><small>原美化保留 · 关闭时恢复 · 本机处理</small></footer>
+      <footer class="ve-footer"><div class="ve-feedback" role="status" aria-live="polite">试着把圆角加 1，看看头像的变化。</div><div class="ve-footer-actions"><button class="ve-icon" data-action="undo" aria-label="撤销">${historyIcon()}</button><button class="ve-icon" data-action="redo" aria-label="重做">${historyIcon(true)}</button><button class="ve-export" data-action="download">导出 JSON</button><button class="ve-save" data-action="save">保存副本 ↗</button></div><small>原美化保留 · 关闭时恢复 · 本机处理</small></footer>
     </section>
-    <section class="ve-controller" aria-label="微调手柄" hidden><div class="ve-controller-head"><span class="ve-grip" title="拖动手柄">⠿</span><b class="ve-controller-title">角色头像 · 圆角</b><button class="ve-text" data-action="expand">展开 ↗</button></div><div class="ve-mini-modes"><button data-mode="position">位置</button><button data-mode="size">大小</button><button data-mode="radius">圆角</button><button data-mode="border">边框</button></div><div class="ve-controller-body"><div class="ve-dpad"><button data-direction="up" aria-label="向上移动">↑</button><button data-direction="left" aria-label="向左移动">←</button><button data-action="reset-mode" aria-label="还原当前调整项">◎</button><button data-direction="right" aria-label="向右移动">→</button><button data-direction="down" aria-label="向下移动">↓</button></div><div class="ve-controller-scalar"><button data-nudge="minus" aria-label="手柄减小数值">−</button><span><b class="ve-mini-value">6</b><small>px</small></span><button data-nudge="plus" aria-label="手柄增大数值">＋</button></div><div class="ve-controller-caption">圆角越大，边角越圆</div></div><div class="ve-controller-foot"><span>步长</span><button data-step="1" aria-pressed="true">1 px</button><button data-step="5" aria-pressed="false">5 px</button><button data-action="undo" aria-label="手柄撤销">↶</button><button class="ve-done" data-action="expand">完成</button></div><div class="ve-mini-status" role="status" aria-live="polite"></div></section>
+    <section class="ve-controller" aria-label="微调手柄" hidden><div class="ve-controller-head"><span class="ve-grip" title="拖动手柄">⠿</span><b class="ve-controller-title">角色头像 · 圆角</b><button class="ve-text" data-action="expand">展开 ↗</button></div><div class="ve-mini-modes"><button data-mode="position">位置</button><button data-mode="size">大小</button><button data-mode="radius">圆角</button><button data-mode="border">边框</button><button data-mode="lift" hidden>上下位置</button><button data-mode="gap" hidden>底部留白</button></div><div class="ve-controller-body"><div class="ve-lift-buttons" hidden><button data-lift="up" aria-label="抬高底栏">↑ 抬高</button><button data-action="reset-mode" aria-label="还原底栏位置">◎</button><button data-lift="down" aria-label="降低底栏">↓ 降低</button></div><div class="ve-dpad"><button data-direction="up" aria-label="向上移动">↑</button><button data-direction="left" aria-label="向左移动">←</button><button data-action="reset-mode" aria-label="还原当前调整项">◎</button><button data-direction="right" aria-label="向右移动">→</button><button data-direction="down" aria-label="向下移动">↓</button></div><div class="ve-controller-scalar"><button data-nudge="minus" aria-label="手柄减小数值">−</button><span><b class="ve-mini-value">6</b><small>px</small></span><button data-nudge="plus" aria-label="手柄增大数值">＋</button></div><div class="ve-controller-caption">圆角越大，边角越圆</div></div><div class="ve-controller-foot"><span>步长</span><button data-step="1" aria-pressed="true">1 px</button><button data-step="5" aria-pressed="false">5 px</button><button data-action="undo" aria-label="手柄撤销">${historyIcon()}</button><button class="ve-done" data-action="expand">完成</button></div><div class="ve-mini-status" role="status" aria-live="polite"></div></section>
   </div>`;
 }
 
@@ -5342,9 +5361,21 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
     const rgb = cs.borderTopColor.match(/^rgba?\(\s*(\d+)[, ]+\s*(\d+)[, ]+\s*(\d+)/);
     const color = rgb ? "#" + rgb.slice(1, 4).map((value) => Number(value).toString(16).padStart(2, "0")).join("") : DEFAULT_VALUES.color;
     const radius = cs.borderTopLeftRadius.endsWith("%") ? number(cs.width, 48) * number(cs.borderTopLeftRadius, 0) / 100 : number(cs.borderTopLeftRadius, 0);
+    let composerOrigin = {};
+    if (key === "composer") {
+      const probe = doc.createElement("span");
+      probe.style.cssText = "all:initial!important;position:fixed!important;visibility:hidden!important;pointer-events:none!important;padding-bottom:var(--tt-inset-bottom, env(safe-area-inset-bottom, 0px))!important;";
+      doc.body.append(probe);
+      const inset = number(hostWin.getComputedStyle(probe).paddingBottom, 0);
+      probe.remove();
+      const paddingBottom = number(cs.paddingBottom, 0);
+      const isTauri = Boolean(hostWin.__TAURITAVERN__ || hostWin.__TAURI_INTERNALS__);
+      const safeAware = isTauri && (Math.abs(paddingBottom - inset) < 1 || /padding-bottom:\s*max\(0px,\s*calc\(var\(--tt-inset-bottom/.test(original));
+      composerOrigin = { paddingBottom, safeAware, paddingAdjustment: paddingBottom - inset };
+    }
     baseline[key] = {
       values: { ...DEFAULT_VALUES, size: Math.round(number(cs.width, 48)), radius: Math.round(radius), border: Math.round(number(cs.borderTopWidth, 0)), color },
-      origin: { x: movable ? parseFloat(parts[0]) : 0, y: movable ? parseFloat(parts[1] || "0") : 0 },
+      origin: { x: movable ? parseFloat(parts[0]) : 0, y: movable ? parseFloat(parts[1] || "0") : 0, ...composerOrigin },
       movable
     };
     return baseline[key];
@@ -5360,14 +5391,21 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
     position: { title: "位置", help: "箭头朝哪，头像就往哪挪；只移动外观，不挤动文字。" },
     size: { title: "大小", help: "宽高一起调整，头像保持正方形。", min: 16, max: 200 },
     radius: { title: "圆角", help: "数值越大，头像的边角越圆。", min: 0, max: 100 },
-    border: { title: "边框", help: "调整边框粗细；设为 0 就是没有边框。", min: 0, max: 12 }
+    border: { title: "边框", help: "调整边框粗细；设为 0 就是没有边框。", min: 0, max: 12 },
+    lift: { title: "上下位置", help: "0 是原位置；正数抬高，负数降低。底栏仍跟随酒馆原有的键盘布局。", min: -120, max: 200 },
+    gap: { title: "底部留白", help: "相对原留白调整：正数增加，负数减少，最少到 0；不会修改系统安全区。", min: -120, max: 200 }
   };
   function render() {
     const v = values(), info = meta[mode], available = Boolean(visibleTarget(targetKey));
+    const composer = targetKey === "composer";
+    $(".ve-properties").dataset.composer = String(composer);
+    $(".ve-controller").dataset.composer = String(composer);
+    $$("[data-mode]").forEach((el) => el.hidden = composer !== ["lift", "gap"].includes(el.dataset.mode));
+    $(".ve-lift-buttons").hidden = mode !== "lift";
     $$("[data-target]").forEach((el) => el.setAttribute("aria-pressed", String(el.dataset.target === targetKey)));
     $$("[data-mode]").forEach((el) => el.setAttribute("aria-pressed", String(el.dataset.mode === mode)));
     $(".ve-scope").firstChild.textContent = `作用于${TARGETS[targetKey].scope} `;
-    $(".ve-property-title").textContent = `头像${info.title}`;
+    $(".ve-property-title").textContent = composer ? `底栏${info.title}` : `头像${info.title}`;
     $(".ve-controller-title").textContent = `${TARGETS[targetKey].name} · ${info.title}`;
     $(".ve-help").textContent = info.help;
     $(".ve-controller-caption").textContent = mode === "position" ? `X ${v.x} / Y ${v.y} px` : info.help;
@@ -5390,7 +5428,7 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
     $(".ve-color").value = v.color;
     $$('[data-action="undo"]').forEach((el) => el.disabled = !history.canUndo);
     $('[data-action="redo"]').disabled = !history.canRedo;
-    $$("[data-nudge], [data-direction], .ve-number, .ve-range, .ve-x, .ve-y, .ve-color").forEach((el) => el.disabled = !available || mode === "position" && !getBaseline(targetKey)?.movable);
+    $$("[data-nudge], [data-direction], [data-lift], .ve-number, .ve-range, .ve-x, .ve-y, .ve-color").forEach((el) => el.disabled = !available || ["position", "lift"].includes(mode) && !getBaseline(targetKey)?.movable);
     $('[data-action="save"]').disabled = !history.canUndo || saving;
     $('[data-action="download"]').disabled = !history.canUndo || saving;
     $('[data-action="reset-all"]').disabled = !history.canUndo;
@@ -5421,12 +5459,13 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
       feedback(`当前画面没有${TARGETS[targetKey].name}，请打开一段含这类消息的聊天。`);
       return;
     }
-    if (scroll) currentTarget.scrollIntoView({ block: "center", behavior: "smooth" });
+    if (scroll && targetKey !== "composer") currentTarget.scrollIntoView({ block: "center", behavior: "smooth" });
     getBaseline(targetKey);
     render();
   }
   function commit(next, label, group = mode) {
     if (!getBaseline(targetKey)) return;
+    if (["position", "lift"].includes(group) && !getBaseline(targetKey).movable) return;
     state.edits[targetKey] = { values: next, origin: getBaseline(targetKey).origin, changed: [.../* @__PURE__ */ new Set([...state.edits[targetKey]?.changed || [], group])] };
     history.push(state);
     writeCss(buildEditedCss(state.source, state.edits));
@@ -5435,7 +5474,8 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
     hostWin.requestAnimationFrame(() => {
       if (destroyed || !currentTarget) return;
       const cs = hostWin.getComputedStyle(currentTarget);
-      const expected = mode === "size" ? [cs.width, next.size] : mode === "radius" ? [cs.borderTopLeftRadius, next.radius] : mode === "border" ? [cs.borderTopWidth, next.border] : null;
+      const origin = getBaseline(targetKey).origin;
+      const expected = mode === "size" ? [cs.width, next.size] : mode === "radius" ? [cs.borderTopLeftRadius, next.radius] : mode === "border" ? [cs.borderTopWidth, next.border] : mode === "lift" ? [cs.translate.split(/\s+/)[1] || "0", origin.y - next.lift] : mode === "gap" ? [cs.paddingBottom, Math.max(0, origin.paddingBottom + next.gap)] : null;
       if (expected && Math.abs(parseFloat(expected[0]) - expected[1]) > 1) feedback("有其他样式影响了效果；可撤销本次调整并查看作者说明。");
     });
   }
@@ -5457,10 +5497,7 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
     compact = value;
     $(".ve-sheet").hidden = value;
     $(".ve-controller").hidden = !value;
-    if (!value) {
-      $(".ve-controller").style.left = "";
-      $(".ve-controller").style.top = "";
-    }
+    if (!value) $(".ve-controller").style.cssText = "";
     render();
   }
   function stopPick() {
@@ -5474,12 +5511,15 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
     event.preventDefault();
     event.stopImmediatePropagation();
     const avatar = event.target.closest?.("#chat .mes .avatar");
-    if (!avatar) {
-      feedback("请点聊天消息旁边的头像。");
+    const composer = event.target.closest?.("#form_sheld");
+    if (!avatar && !composer) {
+      feedback("请点聊天头像或底部输入栏。");
       return;
     }
-    targetKey = avatar.closest(".mes").getAttribute("is_user") === "true" ? "user" : "character";
-    currentTarget = avatar;
+    targetKey = composer ? "composer" : avatar.closest(".mes").getAttribute("is_user") === "true" ? "user" : "character";
+    mode = composer ? "lift" : "radius";
+    $(".ve-controller").style.cssText = "";
+    currentTarget = composer || avatar;
     getBaseline(targetKey);
     compact = true;
     stopPick();
@@ -5520,6 +5560,8 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
         button.addEventListener("click", () => {
           if (/is_user\s*=\s*["']?true/.test(note.selector)) targetKey = "user";
           else if (/is_user\s*=\s*["']?false/.test(note.selector)) targetKey = "character";
+          else if (targetKey === "composer") targetKey = "character";
+          if (["lift", "gap"].includes(mode)) mode = "radius";
           setPage("parts");
           locate();
         });
@@ -5646,6 +5688,7 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
     }
     if (button.dataset.target) {
       targetKey = button.dataset.target;
+      mode = targetKey === "composer" ? "lift" : ["lift", "gap"].includes(mode) ? "radius" : mode;
       locate();
       render();
       feedback(`已选中${TARGETS[targetKey].name}。`);
@@ -5664,10 +5707,11 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
       return;
     }
     if (button.dataset.nudge) nudge(button.dataset.nudge === "plus" ? 1 : -1);
+    if (button.dataset.lift) nudge(button.dataset.lift === "up" ? 1 : -1);
     if (button.dataset.direction) move(button.dataset.direction);
   });
   root2.addEventListener("pointerdown", (event) => {
-    const button = event.target.closest("[data-nudge], [data-direction]");
+    const button = event.target.closest("[data-nudge], [data-direction], [data-lift]");
     if (!button || button.disabled) return;
     heldButton = null;
     endHold();
@@ -5675,7 +5719,7 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
       heldButton = button;
       const repeat = () => {
         heldUntil = Date.now() + 600;
-        button.dataset.nudge ? nudge(button.dataset.nudge === "plus" ? 1 : -1) : move(button.dataset.direction);
+        button.dataset.lift ? nudge(button.dataset.lift === "up" ? 1 : -1) : button.dataset.nudge ? nudge(button.dataset.nudge === "plus" ? 1 : -1) : move(button.dataset.direction);
       };
       repeat();
       heldInterval = hostWin.setInterval(repeat, 100);
@@ -5733,6 +5777,10 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
       event.preventDefault();
       move(event.key.slice(5).toLowerCase());
     }
+    if (compact && mode === "lift" && ["ArrowUp", "ArrowDown"].includes(event.key)) {
+      event.preventDefault();
+      nudge(event.key === "ArrowUp" ? 1 : -1);
+    }
   }
   root2.addEventListener("keydown", keyboard);
   const themeSelect = doc.querySelector("#themes");
@@ -5744,6 +5792,10 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
   }
   themeSelect?.addEventListener("change", themeChanged);
   doc.addEventListener("click", pick, true);
+  function blockPickFocus(event) {
+    if (picking && !event.composedPath().includes(host)) event.preventDefault();
+  }
+  doc.addEventListener("pointerdown", blockPickFocus, true);
   function dispose() {
     if (destroyed) return;
     destroyed = true;
@@ -5753,6 +5805,7 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
     previewStyle.remove();
     doc.removeEventListener("click", pick, true);
     themeSelect?.removeEventListener("change", themeChanged);
+    doc.removeEventListener("pointerdown", blockPickFocus, true);
     hostWin.removeEventListener("pointerup", endHold);
     hostWin.removeEventListener("pointercancel", endHold);
     hostWin.removeEventListener("blur", endHold);

@@ -15,7 +15,7 @@ export function panelMarkup(detected) {
       <div class="body">
         <div class="masthead"><span>YOUR THEME, YOUR WAY</span><span>${star} THE STUDIO ${star}</span><span>MADE FOR TAVERN</span></div>
         <div class="intro"><span class="connection" data-connected="${detected}"><i></i>${detected ? 'TauriTavern 已连接' : '美化适配工作台'}</span></div>
-        <button class="visual-edit" type="button"><span>✥</span><div><b>可视化微调</b><small>点选当前美化的头像，用手柄边看边调</small></div><span>体验新版 ↗</span></button>
+        <button class="visual-edit" type="button"><span>✥</span><div><b>可视化微调</b><small>点选头像或底部输入栏，用手柄边看边调</small></div><span>体验新版 ↗</span></button>
         <div class="workspace">
           <section class="source-section">
             <div class="section-heading"><h3><span>01</span> 选择美化</h3><span class="caption">THE COLLECTION</span></div>

@@ -1,4 +1,5 @@
 // This fixture and its simulated persistence are never included in the release bundle.
+if (new URLSearchParams(location.search).has('layout-test')) await import('./layout-fixture.js');
 const themes = [
   { name: '林间来信', blur_tint_color: '#c2ccba', custom_css: `/* --- 在这里自定义💙 --- */
 /* 角色头像圆角：小一点方方的，大一点圆圆的 */

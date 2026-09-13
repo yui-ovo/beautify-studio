@@ -2,6 +2,33 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseSource, buildEditedCss, stepValue, createHistory, DEFAULT_VALUES, EDIT_START } from '../src/core/editor.js';
 
+test('composer lift preserves host positioning, keyboard rules, transform and safe-area variables', () => {
+  const source = '#form_sheld{position:relative;padding-bottom:var(--tt-inset-bottom);transform:scale(.99)}';
+  const css = buildEditedCss(source, { composer: { values: { ...DEFAULT_VALUES, lift: 7 }, changed: ['lift'], origin: { x: 2, y: 3 } } });
+  const patch = css.slice(source.length);
+  assert.match(patch, /translate: 2px -4px !important/);
+  assert.ok(!/position:|bottom:|height:|transform:|--tt-ime-bottom:|--tt-inset-bottom:/.test(patch));
+  const lowered = buildEditedCss('', { composer: { values: { ...DEFAULT_VALUES, lift: -5 }, changed: ['lift'], origin: { x: 0, y: 0 } } });
+  assert.match(lowered, /translate: 0px 5px/);
+});
+
+test('composer safe-area gap stays dynamic and clamps total padding to zero', () => {
+  const css = buildEditedCss('', { composer: { values: { ...DEFAULT_VALUES, gap: -12 }, changed: ['gap'], origin: { safeAware: true, paddingAdjustment: 6, paddingBottom: 40 } } });
+  assert.match(css, /padding-bottom: max\(0px, calc\(var\(--tt-inset-bottom, env\(safe-area-inset-bottom, 0px\)\) \+ 6px \+ -12px\)\)/);
+  assert.ok(!css.includes('translate:'));
+  assert.ok(!css.includes('--tt-inset-bottom:'));
+  const plain = buildEditedCss('', { composer: { values: { ...DEFAULT_VALUES, gap: 10 }, changed: ['gap'], origin: { paddingBottom: 13 } } });
+  assert.match(plain, /calc\(13px \+ 10px\)/);
+  assert.equal(buildEditedCss('original', { composer: { values: DEFAULT_VALUES, changed: [] } }), 'original');
+});
+
+test('composer values support upward and downward adjustments with finite bounds', () => {
+  assert.equal(stepValue(DEFAULT_VALUES, 'lift', 1).lift, 1);
+  assert.equal(stepValue(DEFAULT_VALUES, 'lift', -1).lift, -1);
+  assert.equal(stepValue(DEFAULT_VALUES, 'gap', -500).gap, -120);
+  assert.equal(stepValue(DEFAULT_VALUES, 'gap', 500).gap, 200);
+});
+
 test('author notes preserve Chinese text, nested comments, order and source lines', () => {
   const css = '/* 自定义💙 */\n@media(max-width:700px){\n/* 头像圆角 */\n.avatar{ border-radius:6px; /* 保留 */ }\n}';
   const notes = parseSource(css);
