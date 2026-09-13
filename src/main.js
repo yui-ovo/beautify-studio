@@ -6,6 +6,8 @@ import { readInstalledThemes, verifySavedTheme, deleteInstalledThemes, updateAct
 import { panelMarkup } from './ui/markup.js';
 import PANEL_CSS from './ui/studio.css';
 import { openVisualEditor } from './host/visual-editor.js';
+import { startEditorRuntime } from './host/editor-runtime.js';
+let editorRuntime;
 let closeVisualEditor = null;
 let selectedTheme = null;
 let selectedFileName = '';
@@ -760,6 +762,7 @@ function startWandEntries() {
 }
 
 function cleanup() {
+  editorRuntime?.dispose();
   closeVisualEditor?.(); closeVisualEditor = null;
   busy = false;
   closePanel();
@@ -809,6 +812,7 @@ function start() {
   try {
     applyRuntimeCompatibility();
     startComposerInteractions();
+    editorRuntime = startEditorRuntime(resolveHostWindow());
   } catch (error) {
     console.warn('[BeautifyStudio] 运行时兼容暂未完全启用，但魔法棒入口仍可使用。', error);
   }

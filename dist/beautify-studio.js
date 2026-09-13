@@ -2158,13 +2158,13 @@ var require_map_generator = __commonJS({
     var sourceMapAvailable = Boolean(SourceMapConsumer && SourceMapGenerator);
     var pathAvailable = Boolean(dirname && resolve && relative && sep);
     var MapGenerator = class {
-      constructor(stringify2, root2, opts, cssString) {
+      constructor(stringify2, root2, opts, cssString2) {
         this.stringify = stringify2;
         this.mapOpts = opts.map || {};
         this.root = root2;
         this.opts = opts;
-        this.css = cssString;
-        this.originalCSS = cssString;
+        this.css = cssString2;
+        this.originalCSS = cssString2;
         this.usesFileUrls = !this.mapOpts.from && this.mapOpts.absolute;
         this.memoizedFileURLs = /* @__PURE__ */ new Map();
         this.memoizedPaths = /* @__PURE__ */ new Map();
@@ -4578,7 +4578,7 @@ var require_lib = __commonJS({
 });
 
 // src/config.js
-var VERSION = "1.4.0";
+var VERSION = "1.5.0";
 var BUTTON_NAME = "美化工作室";
 var STORAGE_KEY = "tt-theme-helper-options-v2";
 var OVERLAY_HOST_ID = "tt-theme-helper-overlay-host";
@@ -5609,6 +5609,9 @@ h3 { font-size:15px; font-weight:600; }
 /* Image resource editor: four readable tabs and real image previews. */
 .ve-tabs{gap:0!important;justify-content:space-between}.ve-tabs button{white-space:nowrap;font-size:12px!important}.ve-tabs button span{font-size:10px}.ve-image-card{padding:12px;background:#fffffc;border:1px solid #dce2d4;border-radius:12px;margin-bottom:14px;min-width:0}.ve-image-thumb{height:140px;border-radius:8px;background:repeating-conic-gradient(#eceee8 0% 25%,#f8f9f5 0% 50%) 0/18px 18px;display:flex;align-items:center;justify-content:center;overflow:hidden}.ve-image-thumb img{display:block;width:100%;height:100%;object-fit:contain}.ve-image-thumb span{font-size:12px;padding:20px;text-align:center;color:#737b6c}.ve-image-card h3{font-size:14px;margin:12px 0 3px;overflow-wrap:anywhere}.ve-image-card>small{display:block;font-size:11px;color:#7d8575;overflow-wrap:anywhere}.ve-image-note{font-size:12px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;margin:9px 0}.ve-image-url{display:block;font-size:12px;color:#737b6c}.ve-image-url input{display:block;width:100%;font-size:12px!important;margin-top:5px;border:1px solid #dce2d4;background:#f8faf5;border-radius:7px;padding:10px;min-width:0}.ve-image-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.ve-image-actions button{font-size:12px!important;padding:9px!important;border-radius:7px;border:1px solid #d6ddce!important;background:#edf1e6!important}.ve-image-actions button:last-child{color:#607052}.ve-image-usage{font-size:12px;color:#858e7c;line-height:1.6;margin:10px 0 0}.ve-change{overflow-wrap:anywhere}.ve-change b{max-width:50%}
 @media(max-width:370px){.ve-tabs{margin-left:12px;margin-right:12px}.ve-tabs button{font-size:11px!important}.ve-tabs button span{font-size:9px}}
+
+/* Text and independent composer controls */
+.ve-property-icon{display:block;width:23px;height:23px;margin:0 auto 4px}.ve-text-settings{margin-top:16px}.ve-text-card{background:#fffffc;border:1px solid #dce2d4;border-radius:12px;padding:14px;margin-bottom:12px}.ve-text-card b,.ve-text-card label{display:block;font-size:13px}.ve-text-card small{display:block;font-size:11px;line-height:1.7;color:#838b79;margin:7px 0}.ve-text-card input[type="text"]{display:block;width:100%;box-sizing:border-box;margin-top:10px;border:1px solid #dce2d4;border-radius:8px;background:#f8faf5;padding:10px;font-size:14px}.ve-text-card button{border:1px solid #d6ddce;border-radius:8px;padding:8px 12px;background:#edf1e6;font-size:12px}.ve-font-controls{display:flex;gap:10px;align-items:center}.ve-font-controls input{width:65px;min-width:0;text-align:center;font-size:20px;border:0;background:transparent}.ve-font-controls button{display:flex;align-items:center;justify-content:center;width:38px;height:38px;padding:0}.ve-font-controls button:last-child{margin-left:auto}.ve-font-controls svg{width:22px;height:22px}.ve-font-controls span{font-size:11px;color:#88917e}
 `;
 
 // node_modules/postcss/lib/postcss.mjs
@@ -5645,7 +5648,7 @@ var EDIT_END = "/* === BEAUTIFY_VISUAL_END === */";
 var TARGETS = {
   character: { name: "角色头像", scope: "全部角色消息", selector: '#chat .mes[is_user="false"] .avatar', icon: "✧" },
   user: { name: "我的头像", scope: "全部用户消息", selector: '#chat .mes[is_user="true"] .avatar', icon: "◎" },
-  composer: { name: "底部输入栏", scope: "输入框与底栏按钮", selector: "#form_sheld", icon: "▤" }
+  composer: { name: "底部输入栏", scope: "输入框与底栏按钮", selector: "#send_form", icon: "▤" }
 };
 var DEFAULT_VALUES = { x: 0, y: 0, size: 48, radius: 12, border: 0, color: "#727c73", lift: 0, gap: 0 };
 function parseSource(css) {
@@ -5676,12 +5679,12 @@ function buildEditedCss(source, edits) {
     const { values: v, changed, origin = { x: 0, y: 0 } } = edit;
     if (key === "composer") {
       const css = [];
-      if (changed.includes("lift")) css.push(`translate: ${origin.x}px ${origin.y - v.lift}px !important;`);
+      if (changed.includes("lift")) rules.push(`/* 只移动输入框和其中按钮 */
+html body #send_form#send_form#send_form { translate: ${origin.x}px ${origin.y - v.lift}px !important; }`);
       if (changed.includes("gap")) {
-        const base = origin.safeAware ? `var(--tt-inset-bottom, env(safe-area-inset-bottom, 0px)) + ${origin.paddingAdjustment || 0}px` : `${origin.paddingBottom || 0}px`;
-        css.push(`padding-bottom: max(0px, calc(${base} + ${v.gap}px)) !important;`);
+        css.push(`--bs-background-offset: ${v.gap}px;`);
       }
-      if (css.length) rules.push(`/* 底部输入栏 · 正数抬高 / 增加留白；负数降低 / 减少留白 */
+      if (css.length) rules.push(`/* 底部背景高度 · 由美化工作室独立绘制，不改变输入栏或安全区布局 */
 html body #form_sheld#form_sheld#form_sheld {
   ${css.join("\n  ")}
 }`);
@@ -5737,6 +5740,7 @@ function createHistory(initial) {
 }
 
 // src/ui/editor-markup.js
+var verticalIcon = `<svg class="ve-property-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v18M8 7l4-4 4 4M8 17l4 4 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 var stepIcon = (plus = false) => `<svg class="ve-step-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 12h12${plus ? "M12 6v12" : ""}" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
 var historyIcon = (redo = false) => `<svg class="ve-history-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"${redo ? ' style="transform:scaleX(-1)"' : ""}><path d="M4 10a8 8 0 1 1 2 9M4 4v6h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 function editorMarkup() {
@@ -5751,13 +5755,13 @@ function editorMarkup() {
       <div class="ve-scroll">
         <div data-page="parts">
           <div class="ve-section-label"><span>01 / 选一个部位</span><button class="ve-text" data-action="pick">⌖ 去屏幕上点选</button></div>
-          <div class="ve-targets"><button data-target="character" aria-pressed="true"><span>✧</span><b>角色头像</b><small>聊天里的 TA</small><i>↗</i></button><button data-target="user" aria-pressed="false"><span>◎</span><b>我的头像</b><small>聊天里的我</small><i>↗</i></button><button class="ve-composer-target" data-target="composer" aria-pressed="false"><span>▤</span><b>底部输入栏</b><small>上下位置 · 底部留白</small><i>↗</i></button></div>
+          <div class="ve-targets"><button data-target="character" aria-pressed="true"><span>✧</span><b>角色头像</b><small>聊天里的 TA</small><i>↗</i></button><button data-target="user" aria-pressed="false"><span>◎</span><b>我的头像</b><small>聊天里的我</small><i>↗</i></button><button class="ve-composer-target" data-target="composer" aria-pressed="false"><span>▤</span><b>底部输入栏</b><small>上下位置 · 底部背景高度</small><i>↗</i></button></div>
           <p class="ve-scope">作用于全部角色消息 <button class="ve-text" data-action="locate">定位 ↗</button></p>
           <div class="ve-section-label"><span>02 / 想调整什么</span><span class="ve-dim">所见即所得</span></div>
-          <div class="ve-properties"><button data-mode="position" aria-pressed="false">✥<span>位置</span></button><button data-mode="size" aria-pressed="false">↗<span>大小</span></button><button data-mode="radius" aria-pressed="true">▢<span>圆角</span></button><button data-mode="border" aria-pressed="false">◉<span>边框</span></button><button data-mode="lift" hidden>↕<span>上下位置</span></button><button data-mode="gap" hidden>▥<span>底部留白</span></button></div>
+          <div class="ve-properties"><button data-mode="position" aria-pressed="false">✥<span>位置</span></button><button data-mode="size" aria-pressed="false">↗<span>大小</span></button><button data-mode="radius" aria-pressed="true">▢<span>圆角</span></button><button data-mode="border" aria-pressed="false">◉<span>边框</span></button><button data-mode="lift" hidden>${verticalIcon}<span>上下位置</span></button><button data-mode="gap" hidden>▥<span>底部背景高度</span></button></div>
           <div class="ve-value-card"><div class="ve-value-title"><b class="ve-property-title">头像圆角</b><span class="ve-unit">PX</span></div><div class="ve-scalar"><button data-nudge="minus" aria-label="减小数值">${stepIcon()}</button><label><input class="ve-number" type="number" min="0" max="100" step="1" aria-label="当前数值"><span>px</span></label><button data-nudge="plus" aria-label="增大数值">${stepIcon(true)}</button></div><div class="ve-position-values" hidden><label>水平 X<input class="ve-x" type="number" min="-300" max="300" aria-label="水平偏移"></label><label>垂直 Y<input class="ve-y" type="number" min="-300" max="300" aria-label="垂直偏移"></label></div><input class="ve-range" type="range" min="0" max="100" aria-label="拖动调整数值"><label class="ve-color-row" hidden>边框颜色<input class="ve-color" type="color" value="#727c73" aria-label="边框颜色"></label><p class="ve-help">数值越大，头像的边角越圆。</p></div>
           <button class="ve-handheld" data-action="compact"><span>✥</span><div><b>打开微调手柄</b><small>收起面板，留更多空间看效果</small></div><span>↗</span></button>
-          <div class="ve-coming"><span>接下来</span> 顶栏 · 消息气泡 <small>逐步开放</small></div>
+          <div class="ve-text-settings"></div><div class="ve-coming"><span>接下来</span> 顶栏 · 消息气泡 <small>逐步开放</small></div>
         </div>
         <div data-page="notes" hidden><p class="ve-description">美化作者写在 CSS 里的小提示，都收在这里。</p><label class="ve-search"><span>⌕</span><input type="search" placeholder="搜索说明，比如：头像、颜色…" aria-label="搜索作者说明"></label><div class="ve-notes"></div></div>
         <div data-page="images" hidden><p class="ve-description">替换链接，或从相册选择。相册图片会自动缩小并内嵌到美化，导出时一起带走。</p><div class="ve-images"></div></div>
@@ -5765,7 +5769,7 @@ function editorMarkup() {
       </div>
       <footer class="ve-footer"><div class="ve-feedback" role="status" aria-live="polite">试着把圆角加 1，看看头像的变化。</div><div class="ve-footer-actions"><button class="ve-icon" data-action="undo" aria-label="撤销">${historyIcon()}</button><button class="ve-icon" data-action="redo" aria-label="重做">${historyIcon(true)}</button><button class="ve-export" data-action="download">导出 JSON</button><button class="ve-save" data-action="save">保存当前美化</button></div><small>保存到原美化 · 未保存可关闭恢复</small></footer>
     </section>
-    <section class="ve-controller" aria-label="微调手柄" hidden><div class="ve-controller-head"><span class="ve-grip" title="拖动手柄">⠿</span><b class="ve-controller-title">角色头像 · 圆角</b><button class="ve-text" data-action="expand">展开 ↗</button></div><div class="ve-mini-modes"><button data-mode="position">位置</button><button data-mode="size">大小</button><button data-mode="radius">圆角</button><button data-mode="border">边框</button><button data-mode="lift" hidden>上下位置</button><button data-mode="gap" hidden>底部留白</button></div><div class="ve-controller-body"><div class="ve-lift-buttons" hidden><button data-lift="up" aria-label="抬高底栏">↑ 抬高</button><button data-action="reset-mode" aria-label="还原底栏位置">◎</button><button data-lift="down" aria-label="降低底栏">↓ 降低</button></div><div class="ve-dpad"><button data-direction="up" aria-label="向上移动">↑</button><button data-direction="left" aria-label="向左移动">←</button><button data-action="reset-mode" aria-label="还原当前调整项">◎</button><button data-direction="right" aria-label="向右移动">→</button><button data-direction="down" aria-label="向下移动">↓</button></div><div class="ve-controller-scalar"><button data-nudge="minus" aria-label="手柄减小数值">${stepIcon()}</button><span><b class="ve-mini-value">6</b><small>px</small></span><button data-nudge="plus" aria-label="手柄增大数值">${stepIcon(true)}</button></div><div class="ve-controller-caption">圆角越大，边角越圆</div></div><div class="ve-controller-foot"><span>步长</span><button data-step="1" aria-pressed="true">1 px</button><button data-step="5" aria-pressed="false">5 px</button><button data-action="undo" aria-label="手柄撤销">${historyIcon()}</button><button class="ve-done" data-action="expand">完成</button></div><div class="ve-mini-status" role="status" aria-live="polite"></div></section>
+    <section class="ve-controller" aria-label="微调手柄" hidden><div class="ve-controller-head"><span class="ve-grip" title="拖动手柄">⠿</span><b class="ve-controller-title">角色头像 · 圆角</b><button class="ve-text" data-action="expand">展开 ↗</button></div><div class="ve-mini-modes"><button data-mode="position">位置</button><button data-mode="size">大小</button><button data-mode="radius">圆角</button><button data-mode="border">边框</button><button data-mode="lift" hidden>上下位置</button><button data-mode="gap" hidden>底部背景高度</button></div><div class="ve-controller-body"><div class="ve-lift-buttons" hidden><button data-lift="up" aria-label="抬高底栏">↑ 抬高</button><button data-action="reset-mode" aria-label="还原底栏位置">◎</button><button data-lift="down" aria-label="降低底栏">↓ 降低</button></div><div class="ve-dpad"><button data-direction="up" aria-label="向上移动">↑</button><button data-direction="left" aria-label="向左移动">←</button><button data-action="reset-mode" aria-label="还原当前调整项">◎</button><button data-direction="right" aria-label="向右移动">→</button><button data-direction="down" aria-label="向下移动">↓</button></div><div class="ve-controller-scalar"><button data-nudge="minus" aria-label="手柄减小数值">${stepIcon()}</button><span><b class="ve-mini-value">6</b><small>px</small></span><button data-nudge="plus" aria-label="手柄增大数值">${stepIcon(true)}</button></div><div class="ve-controller-caption">圆角越大，边角越圆</div></div><div class="ve-controller-foot"><span>步长</span><button data-step="1" aria-pressed="true">1 px</button><button data-step="5" aria-pressed="false">5 px</button><button data-action="undo" aria-label="手柄撤销">${historyIcon()}</button><button class="ve-done" data-action="expand">完成</button></div><div class="ve-mini-status" role="status" aria-live="polite"></div></section>
   </div>`;
 }
 
@@ -5929,6 +5933,137 @@ async function embedImage(win, file) {
   return { url, detail: `${width} × ${height} · 约 ${Math.round(url.length * 0.75 / 1024)} KB，已内嵌` };
 }
 
+// src/core/text.js
+var import_postcss_value_parser2 = __toESM(require_lib(), 1);
+var splitSelectors = (value) => postcss_default.list.comma(value);
+function cssString(text) {
+  return '"' + String(text).replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\n\r\f<>]/g, (c) => `\\${c.charCodeAt(0).toString(16)} `) + '"';
+}
+function readCssString(value) {
+  const nodes = (0, import_postcss_value_parser2.default)(String(value).trim()).nodes;
+  if (nodes.length !== 1 || nodes[0].type !== "string" || nodes[0].unclosed) return null;
+  return nodes[0].value.replace(/\\([0-9a-f]{1,6})\s?|\\([^\n\r])/gi, (_, hex, char) => hex ? String.fromCodePoint(Math.min(parseInt(hex, 16) || 65533, 1114111)) : char);
+}
+function textDeclarations(source) {
+  const entries = [];
+  let index = 0;
+  postcss_default.parse(source).walkDecls((decl2) => {
+    const id = String(index++);
+    if (decl2.parent.type !== "rule" || !["font", "font-size", "content"].includes(decl2.prop.toLowerCase())) return;
+    entries.push({ id, property: decl2.prop.toLowerCase(), value: decl2.value, selector: decl2.parent.selector, line: decl2.source.start.line });
+  });
+  return entries;
+}
+function editTextCss(source, changes = {}) {
+  if (!Object.keys(changes).length) return source;
+  const root2 = postcss_default.parse(source), additions = [];
+  let index = 0;
+  root2.walkDecls((decl2) => {
+    const edit = changes[String(index++)];
+    if (!edit) return;
+    if (decl2.prop.toLowerCase() === "content" && edit.kind === "content") decl2.value = cssString(edit.value);
+    if (["font-size", "font"].includes(decl2.prop.toLowerCase()) && edit.kind === "font" && edit.selectors?.length && Number.isFinite(edit.value)) {
+      const rule2 = postcss_default.rule({ selector: edit.selectors.join(",\n") });
+      rule2.append({ prop: "font-size", value: `${Math.min(48, Math.max(8, edit.value))}px`, important: true });
+      additions.push([decl2.parent, rule2]);
+    }
+  });
+  for (const [anchor, rule2] of additions) anchor.after(rule2);
+  return root2.toString();
+}
+
+// src/host/text.js
+function inspectText(win, style) {
+  const doc = win.document, fonts = [], hints = [];
+  let entries;
+  try {
+    entries = textDeclarations(style.textContent);
+  } catch {
+    return { fonts, hints };
+  }
+  const rules = [];
+  function walk(list2) {
+    for (const rule2 of list2) {
+      if (rule2.style && rule2.selectorText) rules.push(rule2);
+      if (rule2.cssRules) walk(rule2.cssRules);
+    }
+  }
+  try {
+    walk(style.sheet.cssRules);
+  } catch {
+    return { fonts, hints };
+  }
+  const samples = [...doc.querySelectorAll("#chat .mes_text, #chat .mes_text p, #chat .mes_text span")].filter((n) => n.getClientRects().length).slice(-60);
+  const root2 = doc.documentElement;
+  const baseScale = parseFloat(win.getComputedStyle(root2).getPropertyValue("--fontScale"));
+  const before = samples.map((n) => parseFloat(win.getComputedStyle(n).fontSize));
+  const old = root2.style.getPropertyValue("--fontScale"), priority = root2.style.getPropertyPriority("--fontScale");
+  let fixed = [];
+  if (Number.isFinite(baseScale) && baseScale > 0) {
+    try {
+      root2.style.setProperty("--fontScale", String(baseScale * 0.75), "important");
+      fixed = samples.filter((n, i) => Math.abs(parseFloat(win.getComputedStyle(n).fontSize) - before[i]) < 0.1 && !win.getComputedStyle(n).transitionProperty.split(",").some((p) => ["all", "font-size"].includes(p.trim()) && win.getComputedStyle(n).transitionDuration !== "0s"));
+    } finally {
+      if (old) root2.style.setProperty("--fontScale", old, priority);
+      else root2.style.removeProperty("--fontScale");
+    }
+  }
+  for (const entry of entries) {
+    const candidates = rules.filter((r) => r.selectorText === entry.selector && r.style.getPropertyValue(entry.property).trim() === entry.value.trim());
+    if (candidates.length !== 1 || entries.filter((e) => e.selector === entry.selector && e.property === entry.property && e.value === entry.value).length !== 1) continue;
+    const rule2 = candidates[0];
+    if (["font-size", "font"].includes(entry.property)) {
+      if (/^(inherit|unset|revert|revert-layer)$/i.test(entry.value)) continue;
+      const affected = [], original = rule2.style.cssText;
+      const sizes = fixed.map((n) => parseFloat(win.getComputedStyle(n).fontSize));
+      try {
+        rule2.style.setProperty("font-size", "3px", rule2.style.getPropertyPriority("font-size"));
+        fixed.forEach((n, i) => {
+          if (Math.abs(parseFloat(win.getComputedStyle(n).fontSize) - sizes[i]) > 0.5) affected.push(n);
+        });
+      } finally {
+        rule2.style.cssText = original;
+      }
+      if (!affected.length) continue;
+      const selectors = /* @__PURE__ */ new Set();
+      for (const selector of splitSelectors(entry.selector)) {
+        try {
+          if (affected.some((n) => n.matches(selector))) selectors.add(`html body #chat#chat :is(.mes_text, .mes_text *)${`:is(${selector.trim()})`}`);
+          else if (affected.some((n) => n.closest(selector))) selectors.add(`:is(${selector.trim()}) #chat#chat .mes_text, #chat#chat:is(${selector.trim()}) .mes_text, #chat#chat :is(${selector.trim()}) .mes_text`);
+        } catch {
+        }
+      }
+      if (selectors.size) fonts.push({ ...entry, size: Math.round(parseFloat(win.getComputedStyle(affected[0]).fontSize) * 10) / 10, selectors: [...selectors] });
+    } else {
+      const value = readCssString(entry.value);
+      if (value === null || !value.trim()) continue;
+      for (const selector of splitSelectors(entry.selector)) {
+        const match = selector.trim().match(/^(.*?)(::?before|::?after)$/);
+        if (!match) continue;
+        try {
+          const node = doc.querySelector(match[1]);
+          if (!node || !(node.id === "form_sheld" || node.closest("#send_form")) || !node.getClientRects().length) continue;
+          const cs = win.getComputedStyle(node, match[2].replace(/^:([^:])/, "::$1"));
+          if (readCssString(cs.content) !== value || cs.display === "none" || cs.visibility === "hidden") continue;
+          if (/^[\s\uE000-\uF8FF\u2190-\u2BFF]+$/u.test(value)) continue;
+          const original = rule2.style.cssText;
+          let wins = false;
+          try {
+            rule2.style.setProperty("content", '"bs-hint-probe"', rule2.style.getPropertyPriority("content"));
+            wins = readCssString(win.getComputedStyle(node, match[2].replace(/^:([^:])/, "::$1")).content) === "bs-hint-probe";
+          } finally {
+            rule2.style.cssText = original;
+          }
+          if (wins) hints.push({ ...entry, text: value });
+          break;
+        } catch {
+        }
+      }
+    }
+  }
+  return { fonts, hints };
+}
+
 // src/host/visual-editor.js
 function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
   const doc = hostWin.document;
@@ -5948,7 +6083,10 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
   previewStyle.id = "beautify-visual-preview";
   doc.head.append(previewStyle);
   let draft = original;
-  let state = { source: original, edits: {}, images: {} };
+  let state = { source: original, edits: {}, images: {}, text: {}, placeholder: null };
+  const textResources = inspectText(hostWin, nativeStyle);
+  const nativeInput = doc.querySelector("#send_textarea");
+  const originalPlaceholder = nativeInput ? readCssString(hostWin.getComputedStyle(nativeInput).getPropertyValue("--bs-placeholder")) ?? nativeInput.getAttribute("placeholder") ?? "" : "";
   const history = createHistory(state);
   let targetKey = "character", mode = "radius", step = 1, compact = false, picking = false, destroyed = false, saving = false;
   let currentTarget, raf, heldTimer, heldInterval, heldButton = null, heldUntil = 0;
@@ -5981,17 +6119,18 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
   }
   function composeCss() {
     const replacements = Object.fromEntries(Object.entries(state.images).map(([id, asset]) => [id, imageAssets.get(asset).url]));
-    return buildEditedCss(replaceImages(state.source, replacements), state.edits);
+    let css = editTextCss(replaceImages(state.source, replacements), state.text);
+    css = buildEditedCss(css, state.edits);
+    if (state.placeholder !== null) css += `
+/* 输入框提示文字 · 美化工作室 */
+html body #send_textarea#send_textarea { --bs-placeholder: ${cssString(state.placeholder)}; }
+`;
+    return css;
   }
   function writeCss(css) {
     draft = css;
-    if (!Object.keys(state.images).length) {
-      previewStyle.textContent = css.slice(original.length);
-      restoreNativeMedia();
-    } else {
-      previewStyle.textContent = css;
-      nativeStyle.setAttribute("media", "not all");
-    }
+    previewStyle.textContent = css;
+    nativeStyle.setAttribute("media", "not all");
   }
   function visibleTarget(key) {
     const nodes = [...doc.querySelectorAll(TARGETS[key].selector)].filter((n) => n.getClientRects().length);
@@ -6011,21 +6150,12 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
     const rgb = cs.borderTopColor.match(/^rgba?\(\s*(\d+)[, ]+\s*(\d+)[, ]+\s*(\d+)/);
     const color = rgb ? "#" + rgb.slice(1, 4).map((value) => Number(value).toString(16).padStart(2, "0")).join("") : DEFAULT_VALUES.color;
     const radius = cs.borderTopLeftRadius.endsWith("%") ? number(cs.width, 48) * number(cs.borderTopLeftRadius, 0) / 100 : number(cs.borderTopLeftRadius, 0);
-    let composerOrigin = {};
-    if (key === "composer") {
-      const probe = doc.createElement("span");
-      probe.style.cssText = "all:initial!important;position:fixed!important;visibility:hidden!important;pointer-events:none!important;padding-bottom:var(--tt-inset-bottom, env(safe-area-inset-bottom, 0px))!important;";
-      doc.body.append(probe);
-      const inset = number(hostWin.getComputedStyle(probe).paddingBottom, 0);
-      probe.remove();
-      const paddingBottom = number(cs.paddingBottom, 0);
-      const isTauri = Boolean(hostWin.__TAURITAVERN__ || hostWin.__TAURI_INTERNALS__);
-      const safeAware = isTauri && (Math.abs(paddingBottom - inset) < 1 || /padding-bottom:\s*max\(0px,\s*calc\(var\(--tt-inset-bottom/.test(original));
-      composerOrigin = { paddingBottom, safeAware, paddingAdjustment: paddingBottom - inset };
-    }
+    const shellStyle = key === "composer" && doc.querySelector("#form_sheld") ? hostWin.getComputedStyle(doc.querySelector("#form_sheld")) : null;
+    const backgroundStyle = doc.querySelector("[data-bs-background]") ? hostWin.getComputedStyle(doc.querySelector("[data-bs-background]")) : shellStyle;
+    const backgroundEditable = !backgroundStyle || backgroundStyle.backgroundImage !== "none" || !["transparent", "rgba(0, 0, 0, 0)"].includes(backgroundStyle.backgroundColor);
     baseline[key] = {
-      values: { ...DEFAULT_VALUES, size: Math.round(number(cs.width, 48)), radius: Math.round(radius), border: Math.round(number(cs.borderTopWidth, 0)), color },
-      origin: { x: movable ? parseFloat(parts[0]) : 0, y: movable ? parseFloat(parts[1] || "0") : 0, ...composerOrigin },
+      values: { ...DEFAULT_VALUES, size: Math.round(number(cs.width, 48)), radius: Math.round(radius), border: Math.round(number(cs.borderTopWidth, 0)), color, gap: number(shellStyle?.getPropertyValue("--bs-background-offset"), 0) },
+      origin: { x: movable ? parseFloat(parts[0]) : 0, y: movable ? parseFloat(parts[1] || "0") : 0, backgroundEditable },
       movable
     };
     return baseline[key];
@@ -6043,7 +6173,7 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
     radius: { title: "圆角", help: "数值越大，头像的边角越圆。", min: 0, max: 100 },
     border: { title: "边框", help: "调整边框粗细；设为 0 就是没有边框。", min: 0, max: 12 },
     lift: { title: "上下位置", help: "0 是原位置；正数抬高，负数降低。底栏仍跟随酒馆原有的键盘布局。", min: -120, max: 200 },
-    gap: { title: "底部留白", help: "相对原留白调整：正数增加，负数减少，最少到 0；不会修改系统安全区。", min: -120, max: 200 }
+    gap: { title: "底部背景高度", help: "0 为原背景；正数向上延伸背景，负数缩短。输入框位置和系统安全区保持不变。", min: -120, max: 200 }
   };
   function render() {
     const v = values(), info = meta[mode], available = Boolean(visibleTarget(targetKey));
@@ -6055,9 +6185,9 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
     $$("[data-target]").forEach((el) => el.setAttribute("aria-pressed", String(el.dataset.target === targetKey)));
     $$("[data-mode]").forEach((el) => el.setAttribute("aria-pressed", String(el.dataset.mode === mode)));
     $(".ve-scope").firstChild.textContent = `作用于${TARGETS[targetKey].scope} `;
-    $(".ve-property-title").textContent = composer ? `底栏${info.title}` : `头像${info.title}`;
+    $(".ve-property-title").textContent = composer ? mode === "gap" ? info.title : `输入栏${info.title}` : `头像${info.title}`;
     $(".ve-controller-title").textContent = `${TARGETS[targetKey].name} · ${info.title}`;
-    $(".ve-help").textContent = info.help;
+    $(".ve-help").textContent = mode === "gap" && getBaseline(targetKey)?.origin.backgroundEditable === false ? "未识别到独立的底栏背景。这款美化可能把背景画在其他元素上，暂不能单独调节。" : info.help;
     $(".ve-controller-caption").textContent = mode === "position" ? `X ${v.x} / Y ${v.y} px` : info.help;
     $(".ve-scalar").hidden = mode === "position";
     $(".ve-range").hidden = mode === "position";
@@ -6078,7 +6208,7 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
     $(".ve-color").value = v.color;
     $$('[data-action="undo"]').forEach((el) => el.disabled = !history.canUndo || imageBusy);
     $('[data-action="redo"]').disabled = !history.canRedo || imageBusy;
-    $$("[data-nudge], [data-direction], [data-lift], .ve-number, .ve-range, .ve-x, .ve-y, .ve-color").forEach((el) => el.disabled = !available || imageBusy || ["position", "lift"].includes(mode) && !getBaseline(targetKey)?.movable);
+    $$("[data-nudge], [data-direction], [data-lift], .ve-number, .ve-range, .ve-x, .ve-y, .ve-color").forEach((el) => el.disabled = !available || imageBusy || mode === "gap" && getBaseline(targetKey)?.origin.backgroundEditable === false || ["position", "lift"].includes(mode) && !getBaseline(targetKey)?.movable);
     $('[data-action="save"]').disabled = !history.canUndo || saving || imageBusy;
     $('[data-action="download"]').disabled = !history.canUndo || saving || imageBusy;
     $('[data-action="reset-all"]').disabled = !history.canUndo || imageBusy;
@@ -6116,6 +6246,7 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
   }
   function commit(next, label, group = mode) {
     if (imageBusy || !getBaseline(targetKey)) return;
+    if (group === "gap" && getBaseline(targetKey).origin.backgroundEditable === false) return;
     if (["position", "lift"].includes(group) && !getBaseline(targetKey).movable) return;
     state.edits[targetKey] = { values: next, origin: getBaseline(targetKey).origin, changed: [.../* @__PURE__ */ new Set([...state.edits[targetKey]?.changed || [], group])] };
     history.push(state);
@@ -6126,7 +6257,7 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
       if (destroyed || !currentTarget) return;
       const cs = hostWin.getComputedStyle(currentTarget);
       const origin = getBaseline(targetKey).origin;
-      const expected = mode === "size" ? [cs.width, next.size] : mode === "radius" ? [cs.borderTopLeftRadius, next.radius] : mode === "border" ? [cs.borderTopWidth, next.border] : mode === "lift" ? [cs.translate.split(/\s+/)[1] || "0", origin.y - next.lift] : mode === "gap" ? [cs.paddingBottom, Math.max(0, origin.paddingBottom + next.gap)] : null;
+      const expected = mode === "size" ? [cs.width, next.size] : mode === "radius" ? [cs.borderTopLeftRadius, next.radius] : mode === "border" ? [cs.borderTopWidth, next.border] : mode === "lift" ? [cs.translate.split(/\s+/)[1] || "0", origin.y - next.lift] : null;
       if (expected && Math.abs(parseFloat(expected[0]) - expected[1]) > 1) feedback("有其他样式影响了效果；可撤销本次调整并查看作者说明。");
     });
   }
@@ -6162,7 +6293,7 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
     event.preventDefault();
     event.stopImmediatePropagation();
     const avatar = event.target.closest?.("#chat .mes .avatar");
-    const composer = event.target.closest?.("#form_sheld");
+    const composer = event.target.closest?.("#send_form");
     if (!avatar && !composer) {
       feedback("请点聊天头像或底部输入栏。");
       return;
@@ -6363,6 +6494,21 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
   function renderChanges() {
     const container = $(".ve-changes");
     container.replaceChildren();
+    for (const edit of Object.values(state.text)) {
+      const row = doc.createElement("div");
+      row.className = "ve-change";
+      const label = doc.createElement("span"), value = doc.createElement("b");
+      label.textContent = edit.kind === "font" ? "正文字号" : "输入框提示文字";
+      value.textContent = edit.kind === "font" ? `${edit.value} px` : edit.value || "（留空）";
+      row.append(label, value);
+      container.append(row);
+    }
+    if (state.placeholder !== null) {
+      const row = doc.createElement("div");
+      row.className = "ve-change";
+      row.textContent = `输入框提示文字 → ${state.placeholder || "（留空）"}`;
+      container.append(row);
+    }
     for (const [key, edit] of Object.entries(state.edits)) for (const item of edit.changed) {
       const row = doc.createElement("div");
       row.className = "ve-change";
@@ -6400,8 +6546,90 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
     state = next;
     writeCss(composeCss());
     render();
+    renderText();
     if (currentPage === "images") renderImages();
     feedback(message);
+  }
+  function saveTextChange() {
+    history.push(state);
+    writeCss(composeCss());
+    render();
+    renderText();
+    feedback("已预览文字调整，保存后写入当前美化。");
+  }
+  function renderText() {
+    const container = $(".ve-text-settings");
+    container.replaceChildren();
+    for (const font of textResources.fonts) {
+      const card = doc.createElement("article");
+      card.className = "ve-text-card";
+      const title = doc.createElement("b");
+      title.textContent = "正文字号";
+      const note = doc.createElement("small");
+      note.textContent = `已确认不跟随酒馆字体比例 · 第 ${font.line} 行`;
+      const controls = doc.createElement("div");
+      controls.className = "ve-font-controls";
+      const input = doc.createElement("input");
+      input.type = "number";
+      input.min = "8";
+      input.max = "48";
+      input.step = "1";
+      input.setAttribute("aria-label", `正文字号，第 ${font.line} 行`);
+      input.value = state.text[font.id]?.value ?? font.size;
+      const set = (value) => {
+        if (saving || imageBusy || !Number.isFinite(value)) return;
+        value = Math.round(Math.min(48, Math.max(8, value)) * 10) / 10;
+        if (value === (state.text[font.id]?.value ?? font.size)) return;
+        state.text[font.id] = { kind: "font", value, selectors: font.selectors };
+        saveTextChange();
+      };
+      const minus = doc.createElement("button"), plus = doc.createElement("button");
+      minus.innerHTML = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 12h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+      plus.innerHTML = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 12h12M12 6v12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+      minus.setAttribute("aria-label", "减小正文字号");
+      plus.setAttribute("aria-label", "增大正文字号");
+      minus.onclick = () => set(Number(input.value) - 1);
+      plus.onclick = () => set(Number(input.value) + 1);
+      input.onchange = () => {
+        if (input.value !== "") set(Number(input.value));
+      };
+      const unit = doc.createElement("span");
+      unit.textContent = "px";
+      controls.append(minus, input, unit, plus);
+      card.append(title, note, controls);
+      container.append(card);
+    }
+    const textarea = doc.querySelector("#send_textarea");
+    const hints = textResources.hints.length ? textResources.hints : textarea ? [{ id: "native", text: originalPlaceholder }] : [];
+    for (const hint of hints) {
+      const card = doc.createElement("article");
+      card.className = "ve-text-card";
+      const label = doc.createElement("label");
+      label.textContent = "输入框提示文字";
+      const input = doc.createElement("input");
+      input.type = "text";
+      input.maxLength = 300;
+      input.value = hint.id === "native" ? state.placeholder ?? hint.text : state.text[hint.id]?.value ?? hint.text;
+      input.setAttribute("aria-label", "输入框提示文字");
+      label.append(input);
+      const note = doc.createElement("small");
+      note.textContent = hint.id === "native" ? "空输入框中的提示；不会改动消息内容。需启用工作室。" : `作者叠加的文字 · 第 ${hint.line} 行 · 保留原显示条件`;
+      const apply = doc.createElement("button");
+      apply.textContent = "预览文字";
+      apply.onclick = () => {
+        if (saving || imageBusy) return;
+        if (hint.id === "native") {
+          if (state.placeholder === input.value) return;
+          state.placeholder = input.value;
+        } else {
+          if ((state.text[hint.id]?.value ?? hint.text) === input.value) return;
+          state.text[hint.id] = { kind: "content", value: input.value };
+        }
+        saveTextChange();
+      };
+      card.append(label, note, apply);
+      container.append(card);
+    }
   }
   function makeTheme() {
     return { ...JSON.parse(JSON.stringify(theme)), custom_css: draft, name: theme.name };
@@ -6431,8 +6659,9 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
       return;
     }
     if (name === "reset-all") {
-      history.push({ source: original, edits: {}, images: {} });
-      return restoreHistory({ source: original, edits: {}, images: {} }, "已还原全部调整，可撤销。");
+      const initial = { source: original, edits: {}, images: {}, text: {}, placeholder: null };
+      history.push(initial);
+      return restoreHistory(initial, "已还原全部调整，可撤销。");
     }
     if (name === "reset-mode") {
       if (!state.edits[targetKey]) return;
@@ -6613,6 +6842,7 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
   }
   $(".ve-image-count").textContent = resources.length;
   renderNotes();
+  renderText();
   locate(false);
   render();
   updateOutline();
@@ -6620,7 +6850,90 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
   return () => dispose(true);
 }
 
+// src/host/editor-runtime.js
+function startEditorRuntime(win) {
+  const doc = win.document;
+  let input, savedHint, appliedHint, shell, layer, stopped = false;
+  const style = doc.createElement("style");
+  style.textContent = `html body #form_sheld#form_sheld#form_sheld#form_sheld[data-bs-paint] { background: transparent !important; isolation: isolate !important; }
+html body #form_sheld[data-bs-static] { position: relative !important; }`;
+  doc.head.append(style);
+  function restoreHint() {
+    if (input && appliedHint !== void 0 && input.getAttribute("placeholder") === appliedHint) {
+      if (savedHint === null) input.removeAttribute("placeholder");
+      else input.setAttribute("placeholder", savedHint);
+    }
+    input = null;
+    savedHint = appliedHint = void 0;
+  }
+  function restoreBackground() {
+    layer?.remove();
+    layer = null;
+    shell?.removeAttribute("data-bs-paint");
+    shell?.removeAttribute("data-bs-static");
+    shell = null;
+  }
+  function sync() {
+    if (stopped) return;
+    const nextInput = doc.querySelector("#send_textarea");
+    if (nextInput !== input) {
+      restoreHint();
+      input = nextInput;
+      savedHint = input?.getAttribute("placeholder");
+    }
+    if (input) {
+      const hint = readCssString(win.getComputedStyle(input).getPropertyValue("--bs-placeholder"));
+      const current = input.getAttribute("placeholder");
+      if (appliedHint !== void 0 && current !== appliedHint) savedHint = current;
+      if (hint !== null) {
+        if (appliedHint === void 0) savedHint = current;
+        if (current !== hint) input.setAttribute("placeholder", hint);
+        appliedHint = hint;
+      } else if (appliedHint !== void 0) {
+        restoreHint();
+        input = nextInput;
+        savedHint = input.getAttribute("placeholder");
+      }
+    }
+    const nextShell = doc.querySelector("#form_sheld");
+    if (nextShell !== shell) restoreBackground();
+    if (!nextShell) return;
+    const cs = win.getComputedStyle(nextShell);
+    const offset = parseFloat(cs.getPropertyValue("--bs-background-offset"));
+    if (!Number.isFinite(offset) || offset === 0) {
+      restoreBackground();
+      return;
+    }
+    shell = nextShell;
+    if (!layer) {
+      layer = doc.createElement("beautify-background");
+      layer.setAttribute("aria-hidden", "true");
+      layer.dataset.bsBackground = "";
+      shell.append(layer);
+    }
+    shell.removeAttribute("data-bs-paint");
+    shell.removeAttribute("data-bs-static");
+    const original = win.getComputedStyle(shell);
+    const background = original.background, radius = original.borderRadius, isStatic = original.position === "static";
+    layer.style.cssText = `all:initial!important;display:block!important;position:absolute!important;pointer-events:none!important;left:0!important;bottom:0!important;width:100%!important;height:max(0px,calc(100% + ${Math.max(-200, Math.min(300, offset))}px))!important;z-index:-1!important;box-sizing:border-box!important;`;
+    layer.style.setProperty("background", background, "important");
+    layer.style.setProperty("border-radius", radius, "important");
+    if (isStatic) shell.setAttribute("data-bs-static", "");
+    shell.setAttribute("data-bs-paint", "");
+  }
+  const timer = win.setInterval(sync, 180);
+  sync();
+  return { sync, dispose() {
+    stopped = true;
+    win.clearInterval(timer);
+    restoreHint();
+    restoreBackground();
+    style.remove();
+  } };
+}
+
 // src/main.js
+var editorRuntime;
 var closeVisualEditor = null;
 var selectedTheme = null;
 var selectedFileName = "";
@@ -7391,6 +7704,7 @@ function startWandEntries() {
   }
 }
 function cleanup() {
+  editorRuntime?.dispose();
   closeVisualEditor?.();
   closeVisualEditor = null;
   busy = false;
@@ -7459,6 +7773,7 @@ function start() {
   try {
     applyRuntimeCompatibility();
     startComposerInteractions();
+    editorRuntime = startEditorRuntime(resolveHostWindow());
   } catch (error) {
     console.warn("[BeautifyStudio] 运行时兼容暂未完全启用，但魔法棒入口仍可使用。", error);
   }

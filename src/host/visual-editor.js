@@ -2,6 +2,8 @@ import { TARGETS, DEFAULT_VALUES, parseSource, buildEditedCss, stepValue, create
 import { editorMarkup } from '../ui/editor-markup.js';
 import { extractImages, replaceImages, validateImageUrl } from '../core/images.js';
 import { embedImage } from './images.js';
+import { cssString, editTextCss, readCssString } from '../core/text.js';
+import { inspectText } from './text.js';
 import PANEL_CSS from '../ui/studio.css';
 
 // The first release edits the active theme. Preview CSS is never persisted by this module.
@@ -19,7 +21,10 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
   previewStyle.id = 'beautify-visual-preview';
   doc.head.append(previewStyle);
   let draft = original;
-  let state = { source: original, edits: {}, images: {} };
+  let state = { source: original, edits: {}, images: {}, text: {}, placeholder: null };
+  const textResources = inspectText(hostWin, nativeStyle);
+  const nativeInput = doc.querySelector('#send_textarea');
+  const originalPlaceholder = nativeInput ? readCssString(hostWin.getComputedStyle(nativeInput).getPropertyValue('--bs-placeholder')) ?? nativeInput.getAttribute('placeholder') ?? '' : '';
   const history = createHistory(state);
   let targetKey = 'character', mode = 'radius', step = 1, compact = false, picking = false, destroyed = false, saving = false;
   let currentTarget, raf, heldTimer, heldInterval, heldButton = null, heldUntil = 0;
@@ -45,14 +50,16 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
   }
   function composeCss() {
     const replacements = Object.fromEntries(Object.entries(state.images).map(([id, asset]) => [id, imageAssets.get(asset).url]));
-    return buildEditedCss(replaceImages(state.source, replacements), state.edits);
+    let css = editTextCss(replaceImages(state.source, replacements), state.text);
+    css = buildEditedCss(css, state.edits);
+    if (state.placeholder !== null) css += `\n/* 输入框提示文字 · 美化工作室 */\nhtml body #send_textarea#send_textarea { --bs-placeholder: ${cssString(state.placeholder)}; }\n`;
+    return css;
   }
   function writeCss(css) {
     draft = css;
     // Image replacement changes existing declarations, so preview the complete
     // draft while keeping the native CSS text intact for cancellation/stale checks.
-    if (!Object.keys(state.images).length) { previewStyle.textContent = css.slice(original.length); restoreNativeMedia(); }
-    else { previewStyle.textContent = css; nativeStyle.setAttribute('media', 'not all'); }
+    previewStyle.textContent = css; nativeStyle.setAttribute('media', 'not all');
   }
   function visibleTarget(key) {
     const nodes = [...doc.querySelectorAll(TARGETS[key].selector)].filter(n => n.getClientRects().length);
@@ -69,21 +76,12 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
     const rgb = cs.borderTopColor.match(/^rgba?\(\s*(\d+)[, ]+\s*(\d+)[, ]+\s*(\d+)/);
     const color = rgb ? '#' + rgb.slice(1, 4).map(value => Number(value).toString(16).padStart(2, '0')).join('') : DEFAULT_VALUES.color;
     const radius = cs.borderTopLeftRadius.endsWith('%') ? number(cs.width, 48) * number(cs.borderTopLeftRadius, 0) / 100 : number(cs.borderTopLeftRadius, 0);
-    let composerOrigin = {};
-    if (key === 'composer') {
-      const probe = doc.createElement('span');
-      probe.style.cssText = 'all:initial!important;position:fixed!important;visibility:hidden!important;pointer-events:none!important;padding-bottom:var(--tt-inset-bottom, env(safe-area-inset-bottom, 0px))!important;';
-      doc.body.append(probe);
-      const inset = number(hostWin.getComputedStyle(probe).paddingBottom, 0);
-      probe.remove();
-      const paddingBottom = number(cs.paddingBottom, 0);
-      const isTauri = Boolean(hostWin.__TAURITAVERN__ || hostWin.__TAURI_INTERNALS__);
-      const safeAware = isTauri && (Math.abs(paddingBottom - inset) < 1 || /padding-bottom:\s*max\(0px,\s*calc\(var\(--tt-inset-bottom/.test(original));
-      composerOrigin = { paddingBottom, safeAware, paddingAdjustment: paddingBottom - inset };
-    }
+    const shellStyle = key === 'composer' && doc.querySelector('#form_sheld') ? hostWin.getComputedStyle(doc.querySelector('#form_sheld')) : null;
+    const backgroundStyle = doc.querySelector('[data-bs-background]') ? hostWin.getComputedStyle(doc.querySelector('[data-bs-background]')) : shellStyle;
+    const backgroundEditable = !backgroundStyle || backgroundStyle.backgroundImage !== 'none' || !['transparent', 'rgba(0, 0, 0, 0)'].includes(backgroundStyle.backgroundColor);
     baseline[key] = {
-      values: { ...DEFAULT_VALUES, size: Math.round(number(cs.width, 48)), radius: Math.round(radius), border: Math.round(number(cs.borderTopWidth, 0)), color },
-      origin: { x: movable ? parseFloat(parts[0]) : 0, y: movable ? parseFloat(parts[1] || '0') : 0, ...composerOrigin }, movable,
+      values: { ...DEFAULT_VALUES, size: Math.round(number(cs.width, 48)), radius: Math.round(radius), border: Math.round(number(cs.borderTopWidth, 0)), color, gap: number(shellStyle?.getPropertyValue('--bs-background-offset'), 0) },
+      origin: { x: movable ? parseFloat(parts[0]) : 0, y: movable ? parseFloat(parts[1] || '0') : 0, backgroundEditable }, movable,
     };
     return baseline[key];
   }
@@ -95,7 +93,7 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
     radius: { title: '圆角', help: '数值越大，头像的边角越圆。', min: 0, max: 100 },
     border: { title: '边框', help: '调整边框粗细；设为 0 就是没有边框。', min: 0, max: 12 },
     lift: { title: '上下位置', help: '0 是原位置；正数抬高，负数降低。底栏仍跟随酒馆原有的键盘布局。', min: -120, max: 200 },
-    gap: { title: '底部留白', help: '相对原留白调整：正数增加，负数减少，最少到 0；不会修改系统安全区。', min: -120, max: 200 },
+    gap: { title: '底部背景高度', help: '0 为原背景；正数向上延伸背景，负数缩短。输入框位置和系统安全区保持不变。', min: -120, max: 200 },
   };
   function render() {
     const v = values(), info = meta[mode], available = Boolean(visibleTarget(targetKey));
@@ -107,9 +105,9 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
     $$('[data-target]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.target === targetKey)));
     $$('[data-mode]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.mode === mode)));
     $('.ve-scope').firstChild.textContent = `作用于${TARGETS[targetKey].scope} `;
-    $('.ve-property-title').textContent = composer ? `底栏${info.title}` : `头像${info.title}`;
+    $('.ve-property-title').textContent = composer ? mode === 'gap' ? info.title : `输入栏${info.title}` : `头像${info.title}`;
     $('.ve-controller-title').textContent = `${TARGETS[targetKey].name} · ${info.title}`;
-    $('.ve-help').textContent = info.help;
+    $('.ve-help').textContent = mode === 'gap' && getBaseline(targetKey)?.origin.backgroundEditable === false ? '未识别到独立的底栏背景。这款美化可能把背景画在其他元素上，暂不能单独调节。' : info.help;
     $('.ve-controller-caption').textContent = mode === 'position' ? `X ${v.x} / Y ${v.y} px` : info.help;
     $('.ve-scalar').hidden = mode === 'position'; $('.ve-range').hidden = mode === 'position';
     $('.ve-position-values').hidden = mode !== 'position'; $('.ve-color-row').hidden = mode !== 'border';
@@ -122,7 +120,7 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
     $('.ve-color').value = v.color;
     $$('[data-action="undo"]').forEach(el => el.disabled = !history.canUndo || imageBusy);
     $('[data-action="redo"]').disabled = !history.canRedo || imageBusy;
-    $$('[data-nudge], [data-direction], [data-lift], .ve-number, .ve-range, .ve-x, .ve-y, .ve-color').forEach(el => el.disabled = !available || imageBusy || (['position', 'lift'].includes(mode) && !getBaseline(targetKey)?.movable));
+    $$('[data-nudge], [data-direction], [data-lift], .ve-number, .ve-range, .ve-x, .ve-y, .ve-color').forEach(el => el.disabled = !available || imageBusy || (mode === 'gap' && getBaseline(targetKey)?.origin.backgroundEditable === false) || (['position', 'lift'].includes(mode) && !getBaseline(targetKey)?.movable));
     $('[data-action="save"]').disabled = !history.canUndo || saving || imageBusy;
     $('[data-action="download"]').disabled = !history.canUndo || saving || imageBusy;
     $('[data-action="reset-all"]').disabled = !history.canUndo || imageBusy;
@@ -153,6 +151,7 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
   }
   function commit(next, label, group = mode) {
     if (imageBusy || !getBaseline(targetKey)) return;
+    if (group === 'gap' && getBaseline(targetKey).origin.backgroundEditable === false) return;
     if (['position','lift'].includes(group) && !getBaseline(targetKey).movable) return;
     state.edits[targetKey] = { values: next, origin: getBaseline(targetKey).origin, changed: [...new Set([...(state.edits[targetKey]?.changed || []), group])] };
     history.push(state); writeCss(composeCss()); render(); feedback(label);
@@ -161,7 +160,7 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
       if (destroyed || !currentTarget) return;
       const cs = hostWin.getComputedStyle(currentTarget);
       const origin = getBaseline(targetKey).origin;
-      const expected = mode === 'size' ? [cs.width, next.size] : mode === 'radius' ? [cs.borderTopLeftRadius, next.radius] : mode === 'border' ? [cs.borderTopWidth, next.border] : mode === 'lift' ? [cs.translate.split(/\s+/)[1] || '0', origin.y - next.lift] : mode === 'gap' ? [cs.paddingBottom, Math.max(0, origin.paddingBottom + next.gap)] : null;
+      const expected = mode === 'size' ? [cs.width, next.size] : mode === 'radius' ? [cs.borderTopLeftRadius, next.radius] : mode === 'border' ? [cs.borderTopWidth, next.border] : mode === 'lift' ? [cs.translate.split(/\s+/)[1] || '0', origin.y - next.lift] : null;
       if (expected && Math.abs(parseFloat(expected[0]) - expected[1]) > 1) feedback('有其他样式影响了效果；可撤销本次调整并查看作者说明。');
     });
   }
@@ -182,7 +181,7 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
     if (!picking || event.composedPath().includes(host)) return;
     event.preventDefault(); event.stopImmediatePropagation();
     const avatar = event.target.closest?.('#chat .mes .avatar');
-    const composer = event.target.closest?.('#form_sheld');
+    const composer = event.target.closest?.('#send_form');
     if (!avatar && !composer) { feedback('请点聊天头像或底部输入栏。'); return; }
     targetKey = composer ? 'composer' : avatar.closest('.mes').getAttribute('is_user') === 'true' ? 'user' : 'character';
     mode = composer ? 'lift' : 'radius';
@@ -287,6 +286,16 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
   }
   function renderChanges() {
     const container = $('.ve-changes'); container.replaceChildren();
+    for (const edit of Object.values(state.text)) {
+      const row = doc.createElement('div'); row.className = 've-change';
+      const label = doc.createElement('span'), value = doc.createElement('b');
+      label.textContent = edit.kind === 'font' ? '正文字号' : '输入框提示文字';
+      value.textContent = edit.kind === 'font' ? `${edit.value} px` : edit.value || '（留空）';
+      row.append(label, value); container.append(row);
+    }
+    if (state.placeholder !== null) {
+      const row = doc.createElement('div'); row.className = 've-change'; row.textContent = `输入框提示文字 → ${state.placeholder || '（留空）'}`; container.append(row);
+    }
     for (const [key, edit] of Object.entries(state.edits)) for (const item of edit.changed) {
       const row = doc.createElement('div'); row.className = 've-change'; const label = doc.createElement('span'), value = doc.createElement('b');
       label.textContent = `${TARGETS[key].name} · ${meta[item].title}`;
@@ -304,7 +313,53 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
     if (!container.childNodes.length) { const empty = doc.createElement('p'); empty.className = 've-empty'; empty.textContent = '还没有修改，先去给头像换个圆角吧。'; container.append(empty); }
   }
   function setPage(page) { currentPage = page; if (page === 'images') renderImages(); $$('[data-page]').forEach(el => el.hidden = el.dataset.page !== page); $$('[data-tab]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.tab === page))); }
-  function restoreHistory(next, message) { state = next; writeCss(composeCss()); render(); if (currentPage === 'images') renderImages(); feedback(message); }
+  function restoreHistory(next, message) { state = next; writeCss(composeCss()); render(); renderText(); if (currentPage === 'images') renderImages(); feedback(message); }
+  function saveTextChange() {
+    history.push(state); writeCss(composeCss()); render(); renderText(); feedback('已预览文字调整，保存后写入当前美化。');
+  }
+  function renderText() {
+    const container = $('.ve-text-settings'); container.replaceChildren();
+    for (const font of textResources.fonts) {
+      const card = doc.createElement('article'); card.className = 've-text-card';
+      const title = doc.createElement('b'); title.textContent = '正文字号';
+      const note = doc.createElement('small'); note.textContent = `已确认不跟随酒馆字体比例 · 第 ${font.line} 行`;
+      const controls = doc.createElement('div'); controls.className = 've-font-controls';
+      const input = doc.createElement('input'); input.type = 'number'; input.min = '8'; input.max = '48'; input.step = '1'; input.setAttribute('aria-label', `正文字号，第 ${font.line} 行`);
+      input.value = state.text[font.id]?.value ?? font.size;
+      const set = value => {
+        if (saving || imageBusy || !Number.isFinite(value)) return;
+        value = Math.round(Math.min(48, Math.max(8, value)) * 10) / 10;
+        if (value === (state.text[font.id]?.value ?? font.size)) return;
+        state.text[font.id] = { kind: 'font', value, selectors: font.selectors }; saveTextChange();
+      };
+      const minus = doc.createElement('button'), plus = doc.createElement('button');
+      minus.innerHTML = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 12h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+      plus.innerHTML = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 12h12M12 6v12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+      minus.setAttribute('aria-label', '减小正文字号'); plus.setAttribute('aria-label', '增大正文字号');
+      minus.onclick = () => set(Number(input.value) - 1); plus.onclick = () => set(Number(input.value) + 1);
+      input.onchange = () => { if (input.value !== '') set(Number(input.value)); };
+      const unit = doc.createElement('span'); unit.textContent = 'px';
+      controls.append(minus, input, unit, plus); card.append(title, note, controls); container.append(card);
+    }
+    const textarea = doc.querySelector('#send_textarea');
+    const hints = textResources.hints.length ? textResources.hints : textarea ? [{ id: 'native', text: originalPlaceholder }] : [];
+    for (const hint of hints) {
+      const card = doc.createElement('article'); card.className = 've-text-card';
+      const label = doc.createElement('label'); label.textContent = '输入框提示文字';
+      const input = doc.createElement('input'); input.type = 'text'; input.maxLength = 300;
+      input.value = hint.id === 'native' ? state.placeholder ?? hint.text : state.text[hint.id]?.value ?? hint.text;
+      input.setAttribute('aria-label', '输入框提示文字'); label.append(input);
+      const note = doc.createElement('small'); note.textContent = hint.id === 'native' ? '空输入框中的提示；不会改动消息内容。需启用工作室。' : `作者叠加的文字 · 第 ${hint.line} 行 · 保留原显示条件`;
+      const apply = doc.createElement('button'); apply.textContent = '预览文字';
+      apply.onclick = () => {
+        if (saving || imageBusy) return;
+        if (hint.id === 'native') { if (state.placeholder === input.value) return; state.placeholder = input.value; }
+        else { if ((state.text[hint.id]?.value ?? hint.text) === input.value) return; state.text[hint.id] = { kind: 'content', value: input.value }; }
+        saveTextChange();
+      };
+      card.append(label, note, apply); container.append(card);
+    }
+  }
   function makeTheme() { return { ...JSON.parse(JSON.stringify(theme)), custom_css: draft, name: theme.name }; }
   function endHold() { hostWin.clearTimeout(heldTimer); hostWin.clearInterval(heldInterval); }
   async function action(name) {
@@ -317,7 +372,7 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
     if (name === 'pick') { picking = true; $('.ve-sheet').hidden = true; $('.ve-controller').hidden = true; $('.ve-pick-hint').hidden = false; return; }
     if (name === 'cancel-pick') return stopPick();
     if (name === 'close') { dispose(true); onClose('已关闭微调，恢复原美化。'); return; }
-    if (name === 'reset-all') { history.push({ source: original, edits: {}, images: {} }); return restoreHistory({ source: original, edits: {}, images: {} }, '已还原全部调整，可撤销。'); }
+    if (name === 'reset-all') { const initial = { source: original, edits: {}, images: {}, text: {}, placeholder: null }; history.push(initial); return restoreHistory(initial, '已还原全部调整，可撤销。'); }
     if (name === 'reset-mode') {
       if (!state.edits[targetKey]) return;
       state.edits[targetKey].changed = state.edits[targetKey].changed.filter(item => item !== mode);
@@ -406,6 +461,6 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
     host.remove(); initialFocus?.focus?.();
   }
   $('.ve-image-count').textContent = resources.length;
-  renderNotes(); locate(false); render(); updateOutline(); $('[data-action="close"]').focus({ preventScroll: true });
+  renderNotes(); renderText(); locate(false); render(); updateOutline(); $('[data-action="close"]').focus({ preventScroll: true });
   return () => dispose(true);
 }

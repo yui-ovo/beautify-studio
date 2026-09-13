@@ -26,6 +26,18 @@ const themes = [
   { name: '奶油放映室', blur_tint_color: '#c9c2b7', custom_css: '/* 头像圆角 */\n#chat .avatar { border-radius: 20px; }' },
 ];
 let openStudio;
+// Opt-in regression fixtures, never included in the release bundle.
+const textFixture = new URLSearchParams(location.search).get('text-test');
+if (textFixture) {
+  const base = document.createElement('style');
+  base.textContent = ':root{--fontScale:1;--mainFontSize:calc(var(--fontScale)*15px)} #chat .mes_text,#chat .mes_text p{font-size:var(--mainFontSize)}';
+  document.head.append(base);
+  if (textFixture === 'fixed') themes[0].custom_css += '\n/* 作者固定字号 */\n#chat .mes_text p{font-size:18px}';
+  if (textFixture === 'responsive') themes[0].custom_css += '\n#chat .mes_text p{font-size:calc(var(--fontScale)*18px)}';
+  if (textFixture === 'inherited') themes[0].custom_css += '\nbody{font-size:18px}#chat .mes_text,#chat .mes_text p{font-size:inherit}';
+  if (textFixture === 'hint') themes[0].custom_css += '\n#send_form{position:relative}#send_form:has(#send_textarea:placeholder-shown)::after{content:"Say something…";position:absolute;left:55px;pointer-events:none}#send_textarea::placeholder{color:transparent}';
+  if (textFixture === 'inactive') themes[0].custom_css += '\n@media(min-width:99999px){#chat .mes_text p{font-size:25px}}';
+}
 window.appendInexistentScriptButtons = () => {};
 window.getButtonEvent = value => value;
 window.eventOn = (_, handler) => {

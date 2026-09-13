@@ -12,14 +12,11 @@ test('composer lift preserves host positioning, keyboard rules, transform and sa
   assert.match(lowered, /translate: 0px 5px/);
 });
 
-test('composer safe-area gap stays dynamic and clamps total padding to zero', () => {
-  const css = buildEditedCss('', { composer: { values: { ...DEFAULT_VALUES, gap: -12 }, changed: ['gap'], origin: { safeAware: true, paddingAdjustment: 6, paddingBottom: 40 } } });
-  assert.match(css, /padding-bottom: max\(0px, calc\(var\(--tt-inset-bottom, env\(safe-area-inset-bottom, 0px\)\) \+ 6px \+ -12px\)\)/);
-  assert.ok(!css.includes('translate:'));
-  assert.ok(!css.includes('--tt-inset-bottom:'));
-  const plain = buildEditedCss('', { composer: { values: { ...DEFAULT_VALUES, gap: 10 }, changed: ['gap'], origin: { paddingBottom: 13 } } });
-  assert.match(plain, /calc\(13px \+ 10px\)/);
-  assert.equal(buildEditedCss('original', { composer: { values: DEFAULT_VALUES, changed: [] } }), 'original');
+test('composer background adjustment never changes padding or input geometry', () => {
+  const css = buildEditedCss('', { composer: { values: { ...DEFAULT_VALUES, gap: -12, lift: 7 }, changed: ['gap', 'lift'], origin: {x:0,y:0,paddingBottom:34} } });
+  assert.match(css, /--bs-background-offset: -12px/);
+  assert.match(css, /#send_form#send_form#send_form \{ translate: 0px -7px/);
+  assert.ok(!/padding-bottom:|height:|--tt-inset-bottom:/.test(css));
 });
 
 test('composer values support upward and downward adjustments with finite bounds', () => {

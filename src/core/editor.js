@@ -5,7 +5,7 @@ export const EDIT_END = '/* === BEAUTIFY_VISUAL_END === */';
 export const TARGETS = {
   character: { name: '角色头像', scope: '全部角色消息', selector: '#chat .mes[is_user="false"] .avatar', icon: '✧' },
   user: { name: '我的头像', scope: '全部用户消息', selector: '#chat .mes[is_user="true"] .avatar', icon: '◎' },
-  composer: { name: '底部输入栏', scope: '输入框与底栏按钮', selector: '#form_sheld', icon: '▤' },
+  composer: { name: '底部输入栏', scope: '输入框与底栏按钮', selector: '#send_form', icon: '▤' },
 };
 export const DEFAULT_VALUES = { x: 0, y: 0, size: 48, radius: 12, border: 0, color: '#727c73', lift: 0, gap: 0 };
 
@@ -37,14 +37,11 @@ export function buildEditedCss(source, edits) {
     const { values: v, changed, origin = { x: 0, y: 0 } } = edit;
     if (key === 'composer') {
       const css = [];
-      if (changed.includes('lift')) css.push(`translate: ${origin.x}px ${origin.y - v.lift}px !important;`);
+      if (changed.includes('lift')) rules.push(`/* 只移动输入框和其中按钮 */\nhtml body #send_form#send_form#send_form { translate: ${origin.x}px ${origin.y - v.lift}px !important; }`);
       if (changed.includes('gap')) {
-        const base = origin.safeAware
-          ? `var(--tt-inset-bottom, env(safe-area-inset-bottom, 0px)) + ${origin.paddingAdjustment || 0}px`
-          : `${origin.paddingBottom || 0}px`;
-        css.push(`padding-bottom: max(0px, calc(${base} + ${v.gap}px)) !important;`);
+        css.push(`--bs-background-offset: ${v.gap}px;`);
       }
-      if (css.length) rules.push(`/* 底部输入栏 · 正数抬高 / 增加留白；负数降低 / 减少留白 */\nhtml body #form_sheld#form_sheld#form_sheld {\n  ${css.join('\n  ')}\n}`);
+      if (css.length) rules.push(`/* 底部背景高度 · 由美化工作室独立绘制，不改变输入栏或安全区布局 */\nhtml body #form_sheld#form_sheld#form_sheld {\n  ${css.join('\n  ')}\n}`);
       continue;
     }
     const declarations = [];

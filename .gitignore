@@ -7,3 +7,5 @@ playwright-report/
 release/
 .DS_Store
 preview/standalone.html
+
+dist/browser-tests.js
