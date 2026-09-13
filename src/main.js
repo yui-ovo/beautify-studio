@@ -5,6 +5,8 @@ import { validateTheme } from './core/validation.js';
 import { readInstalledThemes, verifySavedTheme, deleteInstalledThemes } from './host/themes.js';
 import { panelMarkup } from './ui/markup.js';
 import PANEL_CSS from './ui/studio.css';
+import { openVisualEditor } from './host/visual-editor.js';
+let closeVisualEditor = null;
 let selectedTheme = null;
 let selectedFileName = '';
 let panelHost = null;
@@ -281,7 +283,7 @@ async function importAndApplyTheme(theme) {
   await waitForHostCondition(hostWin, () => {
     const selected = String(themeSelect.value || '');
     const css = String(doc.getElementById('custom-style')?.textContent || '');
-    return selected === theme.name && css.includes(PATCH_START);
+    return selected === theme.name && css === theme.custom_css;
   });
 
   /* SillyTavern saves settings with a one-second debounce. Do not report success
@@ -508,6 +510,35 @@ function openPanel(preferredDocument = null) {
   if (selectedTheme) setPanelStatus(root, `已选择「${selectedTheme.name}」，可以继续调整或生成适配副本。`);
   if (selectedFileName && selectedFileName !== '酒馆内的美化') showSource(root, 'upload');
   refreshLibrary(root);
+  root.querySelector('.visual-edit')?.addEventListener('click', async () => {
+    if (busy || closeVisualEditor) return;
+    busy = true;
+    try {
+      const themes = await readInstalledThemes(hostWin);
+      const activeName = getThemeSelect(doc)?.value;
+      const theme = themes.find(item => item.name === activeName);
+      if (!theme) throw new Error('请先在酒馆应用并保存一款美化，再开始可视化微调。');
+      host.style.setProperty('display', 'none', 'important');
+      closeVisualEditor = openVisualEditor({
+        hostWin, theme,
+        onDownload: downloadTheme,
+        onSave: async edited => {
+          edited.name = getUniqueThemeName(edited.name);
+          await importAndApplyTheme(edited);
+          if (!await verifySavedTheme(hostWin, edited)) throw new Error('未能核实副本已保存');
+        },
+        onClose: message => {
+          closeVisualEditor = null;
+          host.style.setProperty('display', 'block', 'important');
+          setPanelStatus(root, message);
+          refreshLibrary(root);
+        },
+      });
+    } catch (error) {
+      host.style.setProperty('display', 'block', 'important');
+      setPanelStatus(root, error.message, 'error');
+    } finally { busy = false; }
+  });
   for (const tab of root.querySelectorAll('[data-source]')) {
     tab.addEventListener('click', () => showSource(root, tab.dataset.source));
     tab.addEventListener('keydown', event => {
@@ -731,6 +762,7 @@ function startWandEntries() {
 }
 
 function cleanup() {
+  closeVisualEditor?.(); closeVisualEditor = null;
   busy = false;
   closePanel();
   try { getHostDocument()?.getElementById?.(RUNTIME_STYLE_ID)?.remove(); } catch (_) {}

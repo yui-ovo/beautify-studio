@@ -6,3 +6,4 @@ playwright-report/
 *.log
 release/
 .DS_Store
+preview/standalone.html
