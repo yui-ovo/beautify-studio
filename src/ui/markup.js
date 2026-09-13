@@ -1,4 +1,5 @@
 import { VERSION } from '../config.js';
+import { workspaceNavigation } from './navigation.js';
 const star = '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 0C22 14 26 18 40 20C26 22 22 26 20 40C18 26 14 22 0 20C14 18 18 14 20 0Z" fill="currentColor"/></svg>';
 const arrow = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>';
 const upload = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 16V3m-5 5 5-5 5 5M4 15v5h16v-5"/></svg>';
@@ -15,7 +16,6 @@ export function panelMarkup(detected) {
       <div class="body">
         <div class="masthead"><span>YOUR THEME, YOUR WAY</span><span>${star} THE STUDIO ${star}</span><span>MADE FOR TAVERN</span></div>
         <div class="intro"><span class="connection" data-connected="${detected}"><i></i>${detected ? 'TauriTavern 已连接' : '美化适配工作台'}</span></div>
-        <button class="visual-edit" type="button"><span>✥</span><div><b>可视化微调</b><small>点选头像或底部输入栏，用手柄边看边调</small></div><span>体验新版 ↗</span></button>
         <div class="workspace">
           <section class="source-section">
             <div class="section-heading"><h3><span>01</span> 选择美化</h3><span class="caption">THE COLLECTION</span></div>
@@ -40,6 +40,7 @@ export function panelMarkup(detected) {
         <div class="status" role="status" aria-live="polite">选择美化后即可开始；直接注入会更新所选原美化。</div>
         <div class="colophon"><span>BEAUTIFY STUDIO</span><span>WITH A LITTLE ${star} & A LOT OF CARE</span><span>美化工作室</span></div>
       </div>
+      ${workspaceNavigation('library')}
     </section>
   </div>`;
 }

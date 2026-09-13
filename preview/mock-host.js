@@ -75,4 +75,4 @@ document.querySelector('#send_form').addEventListener('submit', event => { event
 new MutationObserver(() => document.body.classList.toggle('editor-active', Boolean(document.querySelector('#beautify-visual-editor')))).observe(document.body, { childList: true });
 await import('/dist/beautify-studio.js');
 openStudio?.();
-document.querySelector('#tt-theme-helper-overlay-host')?.shadowRoot.querySelector('.visual-edit')?.click();
+document.querySelector('#tt-theme-helper-overlay-host')?.shadowRoot.querySelector('[data-workspace="editor"]')?.click();

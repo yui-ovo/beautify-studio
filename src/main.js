@@ -356,6 +356,7 @@ function syncPanelFromState(root) {
 
 function closePanel() {
   if (busy) return;
+  closeVisualEditor?.(); closeVisualEditor = null;
   try { panelHost?.remove(); } catch (_) {}
   panelHost = null;
   previousFocus?.focus?.();
@@ -470,6 +471,7 @@ function openPanel(preferredDocument = null) {
 
   const existing = doc.getElementById(OVERLAY_HOST_ID);
   if (existing) {
+    if (closeVisualEditor && !closeVisualEditor.suspend()) return;
     existing.style.setProperty('display', 'block', 'important');
     panelHost = existing;
     return;
@@ -493,8 +495,12 @@ function openPanel(preferredDocument = null) {
   if (selectedTheme) setPanelStatus(root, `已选择「${selectedTheme.name}」，可以继续调整或生成适配副本。`);
   if (selectedFileName && selectedFileName !== '酒馆内的美化') showSource(root, 'upload');
   refreshLibrary(root);
-  root.querySelector('.visual-edit')?.addEventListener('click', async () => {
-    if (busy || closeVisualEditor) return;
+  root.querySelector('[data-workspace="editor"]')?.addEventListener('click', async () => {
+    if (busy) return;
+    if (closeVisualEditor) {
+      if (closeVisualEditor.resume()) host.style.setProperty('display', 'none', 'important');
+      return;
+    }
     busy = true;
     try {
       const themes = await readInstalledThemes(hostWin);
@@ -505,6 +511,7 @@ function openPanel(preferredDocument = null) {
       closeVisualEditor = openVisualEditor({
         hostWin, theme,
         onDownload: downloadTheme,
+        onNavigateLibrary: () => { host.style.setProperty('display', 'block', 'important'); root.querySelector('[data-workspace="library"]').focus({ preventScroll: true }); },
         onSave: (edited, originalCss) => updateActiveThemeCss(hostWin, edited, originalCss),
         onClose: message => {
           closeVisualEditor = null;

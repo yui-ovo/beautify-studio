@@ -4,10 +4,11 @@ import { extractImages, replaceImages, validateImageUrl } from '../core/images.j
 import { embedImage } from './images.js';
 import { cssString, editTextCss, readCssString } from '../core/text.js';
 import { inspectText } from './text.js';
+import { searchCss } from '../core/search.js';
 import PANEL_CSS from '../ui/studio.css';
 
 // The first release edits the active theme. Preview CSS is never persisted by this module.
-export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
+export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, onNavigateLibrary }) {
   const doc = hostWin.document;
   const nativeStyle = doc.querySelector('#custom-style');
   if (!nativeStyle) throw new Error('没有找到当前美化的样式，请先在酒馆应用一款美化。');
@@ -28,6 +29,7 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
   const history = createHistory(state);
   let targetKey = 'character', mode = 'radius', step = 1, compact = false, picking = false, destroyed = false, saving = false;
   let currentTarget, raf, heldTimer, heldInterval, heldButton = null, heldUntil = 0;
+  let suspended = false;
   const initialFocus = doc.activeElement;
   const host = doc.createElement('div');
   host.id = 'beautify-visual-editor';
@@ -129,7 +131,7 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
     renderChanges();
   }
   function updateOutline() {
-    if (destroyed) return;
+    if (destroyed || suspended) return;
     if (!currentTarget?.isConnected || !currentTarget.getClientRects().length) {
       const nextTarget = visibleTarget(targetKey);
       if (nextTarget !== currentTarget) { currentTarget = nextTarget; render(); }
@@ -193,6 +195,35 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
     let notes;
     try { notes = parseSource(state.source); } catch { notes = []; feedback('原 CSS 有语法问题；作者说明暂时无法解析，部位微调仍可使用。'); }
     $('.ve-note-count').textContent = notes.length;
+    if (query.trim()) {
+      const { count, results } = searchCss(draft, query);
+      const summary = doc.createElement('p'); summary.className = 've-search-summary';
+      summary.textContent = count ? `全文找到 ${count} 处匹配 · ${results.length} 段代码` : '整份 CSS 中没有找到匹配文字。';
+      container.append(summary);
+      let shown = 0;
+      const more = doc.createElement('button'); more.className = 've-search-more'; more.textContent = '显示更多结果';
+      const appendBatch = () => {
+        more.remove();
+        for (const result of results.slice(shown, shown + 30)) {
+          const card = doc.createElement('article'); card.className = 've-note';
+          const line = doc.createElement('small'); line.textContent = `CSS 原文 / 第 ${result.line}–${result.endLine} 行`;
+          const code = doc.createElement('pre');
+          const term = query.trim(), lower = result.code.toLowerCase(), first = lower.indexOf(term.toLowerCase());
+          const start = Math.max(0, first - 800), excerpt = result.code.slice(start, start + 6000);
+          if (start) code.append(doc.createTextNode('…\n'));
+          let from = 0, at;
+          while ((at = excerpt.toLowerCase().indexOf(term.toLowerCase(), from)) !== -1) {
+            code.append(doc.createTextNode(excerpt.slice(from, at)));
+            const mark = doc.createElement('mark'); mark.textContent = excerpt.slice(at, at + term.length); code.append(mark); from = at + term.length;
+          }
+          code.append(doc.createTextNode(excerpt.slice(from)));
+          if (start + 6000 < result.code.length) code.append(doc.createTextNode('\n…（长段代码已截取匹配附近内容）'));
+          card.append(line, code); container.append(card);
+        }
+        shown += 30; if (shown < results.length) container.append(more);
+      };
+      more.onclick = appendBatch; appendBatch(); return;
+    }
     const filtered = notes.filter(note => (note.text + note.selector).toLowerCase().includes(query.toLowerCase()));
     for (const note of filtered) {
       const card = doc.createElement('article'); card.className = 've-note';
@@ -312,8 +343,8 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
     }
     if (!container.childNodes.length) { const empty = doc.createElement('p'); empty.className = 've-empty'; empty.textContent = '还没有修改，先去给头像换个圆角吧。'; container.append(empty); }
   }
-  function setPage(page) { currentPage = page; if (page === 'images') renderImages(); $$('[data-page]').forEach(el => el.hidden = el.dataset.page !== page); $$('[data-tab]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.tab === page))); }
-  function restoreHistory(next, message) { state = next; writeCss(composeCss()); render(); renderText(); if (currentPage === 'images') renderImages(); feedback(message); }
+  function setPage(page) { currentPage = page; if (page === 'images') renderImages(); if (page === 'notes') renderNotes($('.ve-search input').value); $$('[data-page]').forEach(el => el.hidden = el.dataset.page !== page); $$('[data-tab]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.tab === page))); }
+  function restoreHistory(next, message) { state = next; writeCss(composeCss()); render(); renderText(); if (currentPage === 'notes') renderNotes($('.ve-search input').value); if (currentPage === 'images') renderImages(); feedback(message); }
   function saveTextChange() {
     history.push(state); writeCss(composeCss()); render(); renderText(); feedback('已预览文字调整，保存后写入当前美化。');
   }
@@ -395,6 +426,8 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
   }
   root.addEventListener('click', event => {
     const button = event.target.closest('button'); if (!button || button.disabled || saving) return;
+    if (button.dataset.workspace === 'library') { if (suspend()) onNavigateLibrary?.(); return; }
+    if (button.dataset.workspace === 'editor') return;
     if (button.dataset.action) { void action(button.dataset.action); return; }
     if (button.dataset.target) { targetKey = button.dataset.target; mode = targetKey === 'composer' ? 'lift' : ['lift','gap'].includes(mode) ? 'radius' : mode; locate(); render(); feedback(`已选中${TARGETS[targetKey].name}。`); }
     if (button.dataset.mode) { mode = button.dataset.mode; render(); }
@@ -460,7 +493,22 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }
     hostWin.removeEventListener('pointerup', endHold); hostWin.removeEventListener('pointercancel', endHold); hostWin.removeEventListener('blur', endHold);
     host.remove(); initialFocus?.focus?.();
   }
+  function suspend() {
+    if (destroyed || saving || imageBusy) return false;
+    endHold(); stopPick(); suspended = true; hostWin.cancelAnimationFrame(raf);
+    previewStyle.textContent = ''; restoreNativeMedia(); host.style.setProperty('display', 'none', 'important');
+    return true;
+  }
+  function resume() {
+    if (destroyed) return false;
+    if (!suspended) return true;
+    if (nativeStyle.textContent !== original) { dispose(); onClose('美化已变化，请重新打开微调。'); return false; }
+    suspended = false; host.style.removeProperty('display'); writeCss(draft); setCompact(false); updateOutline();
+    $('[data-workspace="editor"]').focus({ preventScroll: true }); return true;
+  }
   $('.ve-image-count').textContent = resources.length;
   renderNotes(); renderText(); locate(false); render(); updateOutline(); $('[data-action="close"]').focus({ preventScroll: true });
-  return () => dispose(true);
+  const close = () => dispose(true);
+  close.suspend = suspend; close.resume = resume;
+  return close;
 }

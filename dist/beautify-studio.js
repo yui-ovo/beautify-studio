@@ -4578,7 +4578,7 @@ var require_lib = __commonJS({
 });
 
 // src/config.js
-var VERSION = "1.5.0";
+var VERSION = "1.6.0";
 var BUTTON_NAME = "美化工作室";
 var STORAGE_KEY = "tt-theme-helper-options-v2";
 var OVERLAY_HOST_ID = "tt-theme-helper-overlay-host";
@@ -5362,6 +5362,13 @@ async function deleteInstalledThemes(host, names) {
   return uniqueNames.length;
 }
 
+// src/ui/navigation.js
+var libraryIcon = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>';
+var editorIcon = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 3v18M12 3v18M19 3v18M2 8h6M9 16h6M16 9h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="5" cy="8" r="2" fill="currentColor"/><circle cx="12" cy="16" r="2" fill="currentColor"/><circle cx="19" cy="9" r="2" fill="currentColor"/></svg>';
+function workspaceNavigation(active) {
+  return `<nav class="workspace-nav" aria-label="工作室页面"><button type="button" data-workspace="library"${active === "library" ? ' aria-current="page"' : ""}>${libraryIcon}<span>美化适配</span></button><button type="button" data-workspace="editor"${active === "editor" ? ' aria-current="page"' : ""}>${editorIcon}<span>可视化微调</span></button></nav>`;
+}
+
 // src/ui/markup.js
 var star = '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 0C22 14 26 18 40 20C26 22 22 26 20 40C18 26 14 22 0 20C14 18 18 14 20 0Z" fill="currentColor"/></svg>';
 var arrow = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>';
@@ -5378,7 +5385,6 @@ function panelMarkup(detected) {
       <div class="body">
         <div class="masthead"><span>YOUR THEME, YOUR WAY</span><span>${star} THE STUDIO ${star}</span><span>MADE FOR TAVERN</span></div>
         <div class="intro"><span class="connection" data-connected="${detected}"><i></i>${detected ? "TauriTavern 已连接" : "美化适配工作台"}</span></div>
-        <button class="visual-edit" type="button"><span>✥</span><div><b>可视化微调</b><small>点选头像或底部输入栏，用手柄边看边调</small></div><span>体验新版 ↗</span></button>
         <div class="workspace">
           <section class="source-section">
             <div class="section-heading"><h3><span>01</span> 选择美化</h3><span class="caption">THE COLLECTION</span></div>
@@ -5403,6 +5409,7 @@ function panelMarkup(detected) {
         <div class="status" role="status" aria-live="polite">选择美化后即可开始；直接注入会更新所选原美化。</div>
         <div class="colophon"><span>BEAUTIFY STUDIO</span><span>WITH A LITTLE ${star} & A LOT OF CARE</span><span>美化工作室</span></div>
       </div>
+      ${workspaceNavigation("library")}
     </section>
   </div>`;
 }
@@ -5592,7 +5599,6 @@ h3 { font-size:15px; font-weight:600; }
   .colophon { font-size:8px; }.colophon span:last-child { display:none; }
 }
 @media (prefers-reduced-motion:reduce) { *,*::before,*::after { transition:none !important; } }
-:host .visual-edit{display:flex;align-items:center;gap:16px;width:100%;border:1px solid #c9cdca;border-radius:16px;padding:17px 20px;margin:0 0 22px;background:#ecefeb;color:#2e3832;text-align:left;cursor:pointer}.visual-edit>span:first-child{font-size:30px}.visual-edit div{flex:1}.visual-edit b,.visual-edit small{display:block}.visual-edit small{margin-top:4px;color:#6b756d}.visual-edit>span:last-child{font-size:12px}
 /* Visual editor shares the studio's silver paper palette. */
 .visual-editor{font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;color:#303331;--ve-line:#dce0da;--ve-muted:#7c827b;--ve-accent:#60705d}
 .visual-editor *{box-sizing:border-box}.visual-editor [hidden]{display:none!important}.visual-editor button,.visual-editor input{font:inherit}.visual-editor button{cursor:pointer;color:inherit;border:0;background:none}.visual-editor button:disabled{opacity:.35;cursor:default}.visual-editor button:focus-visible,.visual-editor input:focus-visible,.visual-editor summary:focus-visible{outline:2px solid #62735e;outline-offset:3px}.visual-editor input{color:inherit}.visual-editor button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}.ve-masthead{position:fixed;top:0;left:0;right:0;height:58px;background:rgba(250,251,248,.94);border-bottom:1px solid var(--ve-line);display:flex;align-items:center;justify-content:space-between;padding:0 30px;pointer-events:auto}.ve-brand{display:flex;align-items:center;gap:10px;font-size:22px}.ve-brand b{font-size:14px;font-weight:600}.ve-brand i{font:10px Georgia,serif;letter-spacing:2px;color:#8a8e87;margin-left:14px}.ve-live{font-size:11px;color:#687762;display:flex;align-items:center;gap:7px}.ve-live i{width:6px;height:6px;border-radius:50%;background:#73886d;box-shadow:0 0 0 4px #e7ede2}.ve-sheet{position:fixed;left:24px;top:80px;bottom:24px;width:392px;max-height:900px;display:flex;flex-direction:column;background:#fafbf8;border:1px solid #fff;border-radius:22px;box-shadow:0 18px 65px #29352718,0 0 0 1px #d8ddd550;pointer-events:auto;overflow:hidden}.ve-sheet-head{display:flex;align-items:flex-start;justify-content:space-between;padding:22px 22px 16px}.ve-eyebrow{font:9px ui-monospace,monospace;letter-spacing:2px;color:#8b9288}.ve-sheet-head h1{font-size:19px;letter-spacing:-.7px;margin:9px 0 0;font-weight:550}.ve-sheet-head h1 span{display:inline-block;margin-left:9px;color:#9ca894;font-size:24px}.ve-icon{flex:none;width:38px;height:38px;border:1px solid var(--ve-line)!important;border-radius:11px!important;background:#fff8!important;font-size:21px!important}.ve-sheet-head .ve-icon{border:0!important;width:25px;height:28px;font-size:26px!important;color:#8b9089}.ve-theme{margin:0 22px 18px;padding:12px;display:flex;gap:10px;align-items:center;background:linear-gradient(115deg,#e7ebe4,#f2f3ef);border:1px solid #dde2d7;border-radius:12px}.ve-theme-icon{display:grid;place-items:center;width:37px;height:37px;background:#fcfdf9;border:1px solid #d2d8ca;border-radius:9px;font-size:23px;color:#76856d}.ve-theme div{flex:1}.ve-theme small{display:block;font-size:10px;color:#818979}.ve-theme b{font-size:13px;font-weight:550}.ve-draft{border:1px solid #c9d2c1;border-radius:5px;padding:1px 6px;color:#74826c;font-size:10px}.ve-tabs{display:flex;margin:0 22px;border-bottom:1px solid var(--ve-line);gap:22px}.ve-tabs button{position:relative;padding:0 0 12px;font-size:12px;color:#92978f;white-space:nowrap}.ve-tabs button[aria-pressed=true]{color:#343c30;font-weight:600}.ve-tabs button[aria-pressed=true]:after{content:"";position:absolute;height:2px;background:#56664b;bottom:-1px;left:0;right:0}.ve-note-count{font-size:10px;border-radius:4px;background:#e9ece5;padding:0 4px}.ve-scroll{overflow-y:auto;overscroll-behavior:contain;padding:20px 22px 16px;min-height:0;flex:1;scrollbar-width:thin;scrollbar-color:#d3dacf transparent}.ve-section-label{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#686e64;margin-bottom:12px}.ve-text{font-size:11px!important;color:#66775a!important;padding:3px 0}.ve-dim{color:#a1a59b;font-size:10px}.ve-targets{display:grid;grid-template-columns:1fr 1fr;gap:10px}.ve-targets>button{position:relative;text-align:left;border:1px solid var(--ve-line);border-radius:12px;padding:14px;background:#f5f6f2}.ve-targets>button[aria-pressed=true]{border-color:#7c8f71;background:#eef2e9;box-shadow:inset 0 0 0 1px #7c8f7130}.ve-targets>button>span{font-size:24px;color:#87957b;display:block;line-height:1;margin-bottom:13px}.ve-targets b{font-size:12px;display:block;font-weight:550}.ve-targets small{display:block;color:#949b8e;font-size:10px;margin-top:3px}.ve-targets i{position:absolute;right:12px;top:10px;font-style:normal;color:#8e9c82}.ve-scope{display:flex;align-items:center;justify-content:space-between;margin:9px 0 20px;font-size:10px;color:#8b9284}.ve-properties{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px}.ve-properties button{border:1px solid var(--ve-line);border-radius:9px;padding:9px 4px;color:#959b8e;font-size:20px}.ve-properties button span{display:block;font-size:11px;margin-top:2px}.ve-properties button[aria-pressed=true]{background:#e9eee2;border-color:#c2cbb7;color:#566648}.ve-value-card{padding:14px 15px 12px;border:1px solid var(--ve-line);border-radius:12px;background:#fff9}.ve-value-title{display:flex;justify-content:space-between;align-items:center;font-size:11px}.ve-value-title b{font-weight:550}.ve-unit{font:9px ui-monospace,monospace;color:#a3aa9a;letter-spacing:2px}.ve-scalar{display:flex;align-items:center;justify-content:space-between;margin:14px 0 11px}.ve-scalar>button,.ve-controller-scalar>button{height:40px;width:44px;border:1px solid #dbe0d5;border-radius:10px;background:#f1f4ec;font-size:21px}.ve-scalar label{display:flex;align-items:baseline;justify-content:center;gap:4px}.ve-number{width:76px;font:32px/1.2 Georgia,serif!important;border:0;background:transparent;text-align:center;appearance:textfield;-moz-appearance:textfield}.ve-number::-webkit-inner-spin-button{appearance:none}.ve-scalar label span{font-size:11px;color:#a1a894}.ve-range{width:100%;height:14px;accent-color:#7c8f6e;cursor:pointer}.ve-help{margin:7px 0 0;font-size:10px;color:#959c8d;line-height:1.6}.ve-handheld{display:flex;gap:12px;align-items:center;width:100%;border:1px solid #d6ddce!important;border-radius:12px;padding:13px!important;background:#edf1e6!important;margin-top:12px;text-align:left}.ve-handheld>span{font-size:23px;color:#7c8c6f}.ve-handheld>span:last-child{font-size:19px}.ve-handheld div{flex:1}.ve-handheld b{display:block;font-size:12px;font-weight:550}.ve-handheld small{display:block;font-size:10px;color:#909b85;margin-top:3px}.ve-coming{margin-top:17px;display:flex;align-items:center;gap:8px;color:#a1a799;font-size:10px}.ve-coming>span{border:1px solid #dde2d6;border-radius:4px;padding:0 4px;font-size:9px}.ve-coming small{margin-left:auto;font-size:9px}.ve-footer{padding:10px 22px 16px;border-top:1px solid var(--ve-line);background:#f6f8f1}.ve-feedback{font-size:10px;color:#7f8b73;min-height:16px;margin:0 0 10px}.ve-footer-actions{display:flex;gap:7px;align-items:center}.ve-footer-actions .ve-icon{height:37px;width:35px;font-size:19px!important}.ve-export{font-size:11px!important;padding:8px!important;white-space:nowrap}.ve-save{flex:1;background:#384331!important;color:#fff!important;border-radius:9px;padding:10px 8px!important;font-size:12px!important;white-space:nowrap}.ve-footer>small{display:block;text-align:center;font-size:9px;letter-spacing:1px;color:#a5ad9c;margin-top:11px}.ve-position-values{display:flex;gap:12px;margin:16px 0}.ve-position-values label{flex:1;color:#8b977e;font-size:11px}.ve-position-values input{display:block;width:100%;padding:7px;border:1px solid #d8dfd0;border-radius:7px;background:#f8faf4;margin-top:5px}.ve-color-row{display:flex;align-items:center;justify-content:space-between;font-size:11px;margin-top:7px}.ve-color{height:28px;width:40px;padding:2px;border:1px solid #d3dcc8;border-radius:5px;background:transparent}.ve-outline{position:fixed;border:1.5px solid #849574;border-radius:13px;pointer-events:none;box-shadow:0 0 0 3px #fcfff955;transition:width .08s,height .08s}.ve-outline:before,.ve-outline:after{content:"";position:absolute;width:5px;height:5px;background:#fafcf5;border:1px solid #849574;top:-3px}.ve-outline:before{left:-3px}.ve-outline:after{right:-3px}.ve-outline>span{position:absolute;left:-1px;top:-24px;background:#69795b;color:white;border-radius:4px;font-size:10px;white-space:nowrap;padding:2px 7px;box-shadow:0 1px 4px #0001}.ve-controller{position:fixed;width:296px;bottom:34px;left:calc(50% - 148px);border:1px solid #fff;border-radius:19px;background:#f8faf4f5;box-shadow:0 12px 65px #25301930,0 0 0 1px #dce3d580;pointer-events:auto;padding:14px 15px 10px;backdrop-filter:blur(18px)}.ve-controller-head{display:flex;align-items:center;gap:7px;font-size:12px}.ve-controller-head>.ve-text{margin-left:auto}.ve-grip{font-size:21px;color:#a3ae97;cursor:grab;touch-action:none;padding:0 5px}.ve-controller-title{font-weight:550}.ve-mini-modes{display:flex;background:#e9eee1;border-radius:7px;padding:3px;margin-top:12px}.ve-mini-modes button{font-size:10px;flex:1;border-radius:5px;padding:5px}.ve-mini-modes button[aria-pressed=true]{background:#fcfff6;color:#4c5e3c;box-shadow:0 1px 3px #0001}.ve-controller-body{padding:13px 0 8px}.ve-controller-scalar{display:flex;align-items:center;justify-content:space-around}.ve-controller-scalar>span{text-align:center;min-width:65px}.ve-mini-value{font:34px Georgia,serif}.ve-controller-scalar small{font-size:10px;margin-left:3px;color:#939f86}.ve-controller-caption{text-align:center;font-size:10px;color:#89967d;margin-top:10px}.ve-controller-foot{display:flex;align-items:center;gap:6px;border-top:1px solid #dfe5d6;padding-top:10px;font-size:10px;color:#9ca68f}.ve-controller-foot button{border:1px solid #dfe5d7;border-radius:6px;padding:5px 8px;font-size:10px;color:#6e7c60}.ve-controller-foot [aria-pressed=true]{background:#e5ecdb;border-color:#bdc9af}.ve-controller-foot .ve-done{margin-left:auto;background:#49563e;color:#fff;border-color:#49563e}.ve-mini-status{font-size:9px;color:#89957e;margin-top:6px;line-height:1.4}.ve-dpad{display:grid;grid-template-columns:44px 44px 44px;grid-template-rows:36px 36px 36px;gap:4px;justify-content:center}.ve-dpad button{border:1px solid #d8e1cd;border-radius:9px;background:#edf2e6;font-size:20px}.ve-dpad button:nth-child(1){grid-column:2}.ve-dpad button:nth-child(2){grid-column:1;grid-row:2}.ve-dpad button:nth-child(3){grid-column:2;grid-row:2;color:#91a07f;font-size:18px}.ve-dpad button:nth-child(4){grid-column:3;grid-row:2}.ve-dpad button:nth-child(5){grid-column:2;grid-row:3}.ve-description{margin:0 0 16px;font-size:12px;color:#7e8973;line-height:1.8}.ve-search{display:flex;border:1px solid #d9e0d1;border-radius:9px;background:#f4f7ee;align-items:center;padding:8px 10px;gap:8px;margin-bottom:16px}.ve-search input{font-size:11px;background:transparent;border:0;outline:none;width:100%}.ve-search>span{color:#839174;font-size:19px}.ve-note{border:1px solid #dce2d4;border-radius:10px;background:#fffffc;padding:14px;margin-bottom:10px}.ve-note>small{font:9px ui-monospace,monospace;color:#a0aa94}.ve-note>p{margin:8px 0;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}.ve-note summary{font-size:10px;color:#879778;cursor:pointer}.ve-note pre{font:10px/1.6 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;background:#eef3e7;border-radius:5px;padding:8px;color:#68785a}.ve-note>.ve-text{margin-top:8px}.ve-change{padding:14px 0;border-bottom:1px solid #e1e7d9;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px}.ve-change b{font:12px ui-monospace,monospace;color:#738763}.ve-empty{padding:35px 15px;color:#969f8b;font-size:12px;text-align:center;line-height:2}.ve-reset-all{margin-top:20px;width:100%;border:1px solid #dae3cf!important;border-radius:9px;padding:10px!important;font-size:11px!important;color:#859576!important}.ve-pick-hint{position:fixed;top:76px;left:50%;transform:translateX(-50%);background:#3b4931;color:#fff;padding:12px 17px;border-radius:30px;pointer-events:auto;font-size:12px;white-space:nowrap;box-shadow:0 5px 25px #27311b30}.ve-pick-hint button{color:#d6e6c4!important;margin-left:15px;font-size:11px;border-left:1px solid #8a9d7670;padding-left:14px}
@@ -5612,6 +5618,10 @@ h3 { font-size:15px; font-weight:600; }
 
 /* Text and independent composer controls */
 .ve-property-icon{display:block;width:23px;height:23px;margin:0 auto 4px}.ve-text-settings{margin-top:16px}.ve-text-card{background:#fffffc;border:1px solid #dce2d4;border-radius:12px;padding:14px;margin-bottom:12px}.ve-text-card b,.ve-text-card label{display:block;font-size:13px}.ve-text-card small{display:block;font-size:11px;line-height:1.7;color:#838b79;margin:7px 0}.ve-text-card input[type="text"]{display:block;width:100%;box-sizing:border-box;margin-top:10px;border:1px solid #dce2d4;border-radius:8px;background:#f8faf5;padding:10px;font-size:14px}.ve-text-card button{border:1px solid #d6ddce;border-radius:8px;padding:8px 12px;background:#edf1e6;font-size:12px}.ve-font-controls{display:flex;gap:10px;align-items:center}.ve-font-controls input{width:65px;min-width:0;text-align:center;font-size:20px;border:0;background:transparent}.ve-font-controls button{display:flex;align-items:center;justify-content:center;width:38px;height:38px;padding:0}.ve-font-controls button:last-child{margin-left:auto}.ve-font-controls svg{width:22px;height:22px}.ve-font-controls span{font-size:11px;color:#88917e}
+
+/* Persistent two-page navigation */
+.panel>.body{min-height:0;flex:1}.workspace-nav{display:flex;align-items:center;justify-content:center;gap:8px;flex:0 0 auto;padding:10px 18px max(12px,env(safe-area-inset-bottom));border-top:1px solid #dce0da;background:#f5f6f2;color:#747a72;pointer-events:auto}.workspace-nav button{display:flex!important;align-items:center;justify-content:center;gap:9px;border:0!important;border-radius:24px;padding:11px 19px!important;background:transparent;font-size:12px!important;line-height:1.3!important;min-height:44px;white-space:nowrap}.workspace-nav button svg{width:20px;height:20px}.workspace-nav button[aria-current="page"]{background:#fff!important;color:#344431;box-shadow:0 2px 12px #34443110}.ve-sheet>.workspace-nav{border-radius:0 0 22px 22px}.ve-search-summary{font-size:12px;color:#6c7964;margin:0 0 12px}.ve-note mark{background:#e1eab5;color:#35442b;border-radius:2px;padding:0 1px}.ve-search-more{display:block;width:100%;border:1px solid #dce2d4!important;padding:11px!important;border-radius:10px;background:#eff3e8!important;font-size:12px!important}.ve-note pre{overflow-wrap:anywhere;white-space:pre-wrap}
+@media(max-width:700px){.workspace-nav{padding:8px 12px max(9px,env(safe-area-inset-bottom));gap:7px}.workspace-nav button{flex:1;padding:10px 12px!important}.ve-sheet{height:min(680px,79dvh)}.ve-sheet>.workspace-nav{border-radius:0 0 21px 21px}}
 `;
 
 // node_modules/postcss/lib/postcss.mjs
@@ -5763,11 +5773,12 @@ function editorMarkup() {
           <button class="ve-handheld" data-action="compact"><span>✥</span><div><b>打开微调手柄</b><small>收起面板，留更多空间看效果</small></div><span>↗</span></button>
           <div class="ve-text-settings"></div><div class="ve-coming"><span>接下来</span> 顶栏 · 消息气泡 <small>逐步开放</small></div>
         </div>
-        <div data-page="notes" hidden><p class="ve-description">美化作者写在 CSS 里的小提示，都收在这里。</p><label class="ve-search"><span>⌕</span><input type="search" placeholder="搜索说明，比如：头像、颜色…" aria-label="搜索作者说明"></label><div class="ve-notes"></div></div>
+        <div data-page="notes" hidden><p class="ve-description">作者说明收在这里；搜索可查找当前美化的全部 CSS 文字。</p><label class="ve-search"><span>⌕</span><input type="search" placeholder="搜索全部 CSS：说明、类名、属性、网址…" aria-label="搜索说明和全部代码"></label><div class="ve-notes"></div></div>
         <div data-page="images" hidden><p class="ve-description">替换链接，或从相册选择。相册图片会自动缩小并内嵌到美化，导出时一起带走。</p><div class="ve-images"></div></div>
         <div data-page="changes" hidden><p class="ve-description">每次调整都有迹可循。保存时写入当前美化。</p><div class="ve-changes"></div><button class="ve-reset-all" data-action="reset-all">还原全部调整</button></div>
       </div>
       <footer class="ve-footer"><div class="ve-feedback" role="status" aria-live="polite">试着把圆角加 1，看看头像的变化。</div><div class="ve-footer-actions"><button class="ve-icon" data-action="undo" aria-label="撤销">${historyIcon()}</button><button class="ve-icon" data-action="redo" aria-label="重做">${historyIcon(true)}</button><button class="ve-export" data-action="download">导出 JSON</button><button class="ve-save" data-action="save">保存当前美化</button></div><small>保存到原美化 · 未保存可关闭恢复</small></footer>
+      ${workspaceNavigation("editor")}
     </section>
     <section class="ve-controller" aria-label="微调手柄" hidden><div class="ve-controller-head"><span class="ve-grip" title="拖动手柄">⠿</span><b class="ve-controller-title">角色头像 · 圆角</b><button class="ve-text" data-action="expand">展开 ↗</button></div><div class="ve-mini-modes"><button data-mode="position">位置</button><button data-mode="size">大小</button><button data-mode="radius">圆角</button><button data-mode="border">边框</button><button data-mode="lift" hidden>上下位置</button><button data-mode="gap" hidden>底部背景高度</button></div><div class="ve-controller-body"><div class="ve-lift-buttons" hidden><button data-lift="up" aria-label="抬高底栏">↑ 抬高</button><button data-action="reset-mode" aria-label="还原底栏位置">◎</button><button data-lift="down" aria-label="降低底栏">↓ 降低</button></div><div class="ve-dpad"><button data-direction="up" aria-label="向上移动">↑</button><button data-direction="left" aria-label="向左移动">←</button><button data-action="reset-mode" aria-label="还原当前调整项">◎</button><button data-direction="right" aria-label="向右移动">→</button><button data-direction="down" aria-label="向下移动">↓</button></div><div class="ve-controller-scalar"><button data-nudge="minus" aria-label="手柄减小数值">${stepIcon()}</button><span><b class="ve-mini-value">6</b><small>px</small></span><button data-nudge="plus" aria-label="手柄增大数值">${stepIcon(true)}</button></div><div class="ve-controller-caption">圆角越大，边角越圆</div></div><div class="ve-controller-foot"><span>步长</span><button data-step="1" aria-pressed="true">1 px</button><button data-step="5" aria-pressed="false">5 px</button><button data-action="undo" aria-label="手柄撤销">${historyIcon()}</button><button class="ve-done" data-action="expand">完成</button></div><div class="ve-mini-status" role="status" aria-live="polite"></div></section>
   </div>`;
@@ -6064,8 +6075,33 @@ function inspectText(win, style) {
   return { fonts, hints };
 }
 
+// src/core/search.js
+function searchCss(source, query) {
+  const term = String(query).trim().toLowerCase();
+  if (!term) return { count: 0, results: [] };
+  const lines = String(source).split(/\r?\n/), ranges = [];
+  let count = 0;
+  lines.forEach((line, index) => {
+    const lower = line.toLowerCase();
+    let from = 0, found = false, at;
+    while ((at = lower.indexOf(term, from)) !== -1) {
+      count++;
+      found = true;
+      from = at + term.length;
+    }
+    if (!found) return;
+    const start2 = Math.max(0, index - 2), end = Math.min(lines.length - 1, index + 2);
+    const prev = ranges.at(-1);
+    if (prev && start2 <= prev.end + 1) {
+      prev.end = end;
+      prev.matches.push(index + 1);
+    } else ranges.push({ start: start2, end, matches: [index + 1] });
+  });
+  return { count, results: ranges.map((r) => ({ line: r.start + 1, endLine: r.end + 1, matches: r.matches, code: lines.slice(r.start, r.end + 1).join("\n") })) };
+}
+
 // src/host/visual-editor.js
-function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
+function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, onNavigateLibrary }) {
   const doc = hostWin.document;
   const nativeStyle = doc.querySelector("#custom-style");
   if (!nativeStyle) throw new Error("没有找到当前美化的样式，请先在酒馆应用一款美化。");
@@ -6090,6 +6126,7 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload }) {
   const history = createHistory(state);
   let targetKey = "character", mode = "radius", step = 1, compact = false, picking = false, destroyed = false, saving = false;
   let currentTarget, raf, heldTimer, heldInterval, heldButton = null, heldUntil = 0;
+  let suspended = false;
   const initialFocus = doc.activeElement;
   const host = doc.createElement("div");
   host.id = "beautify-visual-editor";
@@ -6217,7 +6254,7 @@ html body #send_textarea#send_textarea { --bs-placeholder: ${cssString(state.pla
     renderChanges();
   }
   function updateOutline() {
-    if (destroyed) return;
+    if (destroyed || suspended) return;
     if (!currentTarget?.isConnected || !currentTarget.getClientRects().length) {
       const nextTarget = visibleTarget(targetKey);
       if (nextTarget !== currentTarget) {
@@ -6319,6 +6356,47 @@ html body #send_textarea#send_textarea { --bs-placeholder: ${cssString(state.pla
       feedback("原 CSS 有语法问题；作者说明暂时无法解析，部位微调仍可使用。");
     }
     $(".ve-note-count").textContent = notes.length;
+    if (query.trim()) {
+      const { count, results } = searchCss(draft, query);
+      const summary = doc.createElement("p");
+      summary.className = "ve-search-summary";
+      summary.textContent = count ? `全文找到 ${count} 处匹配 · ${results.length} 段代码` : "整份 CSS 中没有找到匹配文字。";
+      container.append(summary);
+      let shown = 0;
+      const more = doc.createElement("button");
+      more.className = "ve-search-more";
+      more.textContent = "显示更多结果";
+      const appendBatch = () => {
+        more.remove();
+        for (const result of results.slice(shown, shown + 30)) {
+          const card = doc.createElement("article");
+          card.className = "ve-note";
+          const line = doc.createElement("small");
+          line.textContent = `CSS 原文 / 第 ${result.line}–${result.endLine} 行`;
+          const code = doc.createElement("pre");
+          const term = query.trim(), lower = result.code.toLowerCase(), first = lower.indexOf(term.toLowerCase());
+          const start2 = Math.max(0, first - 800), excerpt = result.code.slice(start2, start2 + 6e3);
+          if (start2) code.append(doc.createTextNode("…\n"));
+          let from = 0, at;
+          while ((at = excerpt.toLowerCase().indexOf(term.toLowerCase(), from)) !== -1) {
+            code.append(doc.createTextNode(excerpt.slice(from, at)));
+            const mark = doc.createElement("mark");
+            mark.textContent = excerpt.slice(at, at + term.length);
+            code.append(mark);
+            from = at + term.length;
+          }
+          code.append(doc.createTextNode(excerpt.slice(from)));
+          if (start2 + 6e3 < result.code.length) code.append(doc.createTextNode("\n…（长段代码已截取匹配附近内容）"));
+          card.append(line, code);
+          container.append(card);
+        }
+        shown += 30;
+        if (shown < results.length) container.append(more);
+      };
+      more.onclick = appendBatch;
+      appendBatch();
+      return;
+    }
     const filtered = notes.filter((note) => (note.text + note.selector).toLowerCase().includes(query.toLowerCase()));
     for (const note of filtered) {
       const card = doc.createElement("article");
@@ -6539,6 +6617,7 @@ html body #send_textarea#send_textarea { --bs-placeholder: ${cssString(state.pla
   function setPage(page) {
     currentPage = page;
     if (page === "images") renderImages();
+    if (page === "notes") renderNotes($(".ve-search input").value);
     $$("[data-page]").forEach((el) => el.hidden = el.dataset.page !== page);
     $$("[data-tab]").forEach((el) => el.setAttribute("aria-pressed", String(el.dataset.tab === page)));
   }
@@ -6547,6 +6626,7 @@ html body #send_textarea#send_textarea { --bs-placeholder: ${cssString(state.pla
     writeCss(composeCss());
     render();
     renderText();
+    if (currentPage === "notes") renderNotes($(".ve-search input").value);
     if (currentPage === "images") renderImages();
     feedback(message);
   }
@@ -6709,6 +6789,11 @@ html body #send_textarea#send_textarea { --bs-placeholder: ${cssString(state.pla
   root2.addEventListener("click", (event) => {
     const button = event.target.closest("button");
     if (!button || button.disabled || saving) return;
+    if (button.dataset.workspace === "library") {
+      if (suspend()) onNavigateLibrary?.();
+      return;
+    }
+    if (button.dataset.workspace === "editor") return;
     if (button.dataset.action) {
       void action(button.dataset.action);
       return;
@@ -6840,6 +6925,33 @@ html body #send_textarea#send_textarea { --bs-placeholder: ${cssString(state.pla
     host.remove();
     initialFocus?.focus?.();
   }
+  function suspend() {
+    if (destroyed || saving || imageBusy) return false;
+    endHold();
+    stopPick();
+    suspended = true;
+    hostWin.cancelAnimationFrame(raf);
+    previewStyle.textContent = "";
+    restoreNativeMedia();
+    host.style.setProperty("display", "none", "important");
+    return true;
+  }
+  function resume() {
+    if (destroyed) return false;
+    if (!suspended) return true;
+    if (nativeStyle.textContent !== original) {
+      dispose();
+      onClose("美化已变化，请重新打开微调。");
+      return false;
+    }
+    suspended = false;
+    host.style.removeProperty("display");
+    writeCss(draft);
+    setCompact(false);
+    updateOutline();
+    $('[data-workspace="editor"]').focus({ preventScroll: true });
+    return true;
+  }
   $(".ve-image-count").textContent = resources.length;
   renderNotes();
   renderText();
@@ -6847,7 +6959,10 @@ html body #send_textarea#send_textarea { --bs-placeholder: ${cssString(state.pla
   render();
   updateOutline();
   $('[data-action="close"]').focus({ preventScroll: true });
-  return () => dispose(true);
+  const close = () => dispose(true);
+  close.suspend = suspend;
+  close.resume = resume;
+  return close;
 }
 
 // src/host/editor-runtime.js
@@ -7235,6 +7350,8 @@ function syncPanelFromState(root2) {
 }
 function closePanel() {
   if (busy) return;
+  closeVisualEditor?.();
+  closeVisualEditor = null;
   try {
     panelHost?.remove();
   } catch (_) {
@@ -7357,6 +7474,7 @@ function openPanel(preferredDocument = null) {
   if (!doc?.body) return;
   const existing = doc.getElementById(OVERLAY_HOST_ID);
   if (existing) {
+    if (closeVisualEditor && !closeVisualEditor.suspend()) return;
     existing.style.setProperty("display", "block", "important");
     panelHost = existing;
     return;
@@ -7378,8 +7496,12 @@ function openPanel(preferredDocument = null) {
   if (selectedTheme) setPanelStatus(root2, `已选择「${selectedTheme.name}」，可以继续调整或生成适配副本。`);
   if (selectedFileName && selectedFileName !== "酒馆内的美化") showSource(root2, "upload");
   refreshLibrary(root2);
-  root2.querySelector(".visual-edit")?.addEventListener("click", async () => {
-    if (busy || closeVisualEditor) return;
+  root2.querySelector('[data-workspace="editor"]')?.addEventListener("click", async () => {
+    if (busy) return;
+    if (closeVisualEditor) {
+      if (closeVisualEditor.resume()) host.style.setProperty("display", "none", "important");
+      return;
+    }
     busy = true;
     try {
       const themes = await readInstalledThemes(hostWin);
@@ -7391,6 +7513,10 @@ function openPanel(preferredDocument = null) {
         hostWin,
         theme,
         onDownload: downloadTheme,
+        onNavigateLibrary: () => {
+          host.style.setProperty("display", "block", "important");
+          root2.querySelector('[data-workspace="library"]').focus({ preventScroll: true });
+        },
         onSave: (edited, originalCss) => updateActiveThemeCss(hostWin, edited, originalCss),
         onClose: (message) => {
           closeVisualEditor = null;

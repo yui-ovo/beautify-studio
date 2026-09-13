@@ -2,6 +2,7 @@ import { inspectText } from '../src/host/text.js';
 import { editTextCss, cssString } from '../src/core/text.js';
 import { buildEditedCss, DEFAULT_VALUES } from '../src/core/editor.js';
 import { startEditorRuntime } from '../src/host/editor-runtime.js';
+import { openVisualEditor } from '../src/host/visual-editor.js';
 
 const out = document.querySelector('pre');
 let passes = 0, failures = 0;
@@ -66,6 +67,23 @@ test('background height changes independently, supports negatives and follows sa
 });
 test('theme switch and runtime disposal remove temporary paint and restore original styles', () => {
   source.textContent=''; runtime.sync(); equal(shell.querySelector('[data-bs-background]'),null); equal(shell.hasAttribute('data-bs-paint'),false); equal(getComputedStyle(shell).backgroundColor,'rgb(230, 240, 220)'); runtime.dispose();
+});
+test('two-page navigation preserves unsaved edits and full-code search across switches', () => {
+  source.textContent = '#chat p{font-size:18px}';
+  const close = openVisualEditor({hostWin:window,theme:{name:'test',custom_css:source.textContent},onClose(){},onDownload(){},onSave(){}});
+  try {
+    const root = document.querySelector('#beautify-visual-editor').shadowRoot;
+    equal(root.querySelectorAll('.workspace-nav button').length,2);
+    root.querySelector('.ve-font-controls button:last-child').click(); equal(font(),19);
+    root.querySelector('[data-tab="notes"]').click();
+    const input = root.querySelector('.ve-search input'); input.value='font-size'; input.dispatchEvent(new Event('input',{bubbles:true}));
+    equal(root.querySelector('.ve-note mark').textContent,'font-size');
+    close.suspend(); equal(font(),18);
+    close.resume(); equal(font(),19); equal(input.value,'font-size');
+    equal(root.querySelector('[data-page="notes"]').hidden,false);
+    root.querySelector('[data-action="undo"]').click(); equal(font(),18);
+  } finally { close(); }
+  equal(document.querySelector('#beautify-visual-preview'),null); equal(font(),18);
 });
 out.textContent += `\n${passes} passed, ${failures} failed`;
 document.title = failures ? 'FAIL browser regressions' : 'PASS browser regressions';
