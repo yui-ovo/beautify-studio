@@ -3,6 +3,7 @@ import { editTextCss, cssString } from '../src/core/text.js';
 import { buildEditedCss, DEFAULT_VALUES } from '../src/core/editor.js';
 import { startEditorRuntime } from '../src/host/editor-runtime.js';
 import { openVisualEditor } from '../src/host/visual-editor.js';
+import { describeTarget } from '../src/host/picker.js';
 
 const out = document.querySelector('pre');
 let passes = 0, failures = 0;
@@ -84,6 +85,37 @@ test('two-page navigation preserves unsaved edits and full-code search across sw
     root.querySelector('[data-action="undo"]').click(); equal(font(),18);
   } finally { close(); }
   equal(document.querySelector('#beautify-visual-preview'),null); equal(font(),18);
+});
+test('universal picker suppresses button actions and edits only the selected element', () => {
+  source.textContent=''; const selected=document.querySelector('#unrelated'), other=form.querySelector('button');
+  let clicks=0; const onClick=()=>clicks++; selected.addEventListener('click',onClick);
+  const close=openVisualEditor({hostWin:window,theme:{name:'test',custom_css:''},onClose(){},onDownload(){},onSave(){}});
+  let saved;
+  try {
+    const root=document.querySelector('#beautify-visual-editor').shadowRoot;
+    root.querySelector('[data-action="pick"]').click(); selected.click(); equal(clicks,0);
+    equal(root.querySelector('.ve-picked').hidden,false);
+    const otherColor=getComputedStyle(other).color;
+    root.querySelector('.ve-sheet [data-mode="textColor"]').click();
+    const color=root.querySelector('.ve-color');color.value='#123456';color.dispatchEvent(new Event('input',{bubbles:true}));
+    equal(getComputedStyle(selected).color,'rgb(18, 52, 86)'); equal(getComputedStyle(other).color,otherColor);
+    root.querySelector('.ve-sheet [data-mode="width"]').click();
+    const previous=parseFloat(getComputedStyle(selected).width);
+    root.querySelector('.ve-sheet [data-nudge="plus"]').click(); near(parseFloat(getComputedStyle(selected).width),Math.round(previous)+1);
+    root.querySelector('[data-action="pick"]').click(); other.click();
+    equal(root.querySelectorAll('.ve-picked-list option').length,2);
+    const list=root.querySelector('.ve-picked-list');list.value=list.options[0].value;list.dispatchEvent(new Event('change',{bubbles:true}));
+    equal(root.querySelector('.ve-picked-name').textContent,'按钮 · 工具栏');
+    saved=document.querySelector('#beautify-visual-preview').textContent;
+  } finally { close(); selected.removeEventListener('click',onClick); }
+  source.textContent=saved;equal(getComputedStyle(selected).color,'rgb(18, 52, 86)');
+});
+test('picker escapes unusual IDs, selects SVG as a unit and rejects its own UI', () => {
+  const node=document.createElement('button');node.id='x"]:{odd}';fixture.append(node);
+  try { const selected=describeTarget(window,node);equal(document.querySelector(selected.target.selector),node); } finally {node.remove();}
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'),path=document.createElementNS(svg.namespaceURI,'path');svg.append(path);fixture.append(svg);
+  try {equal(describeTarget(window,path).node,svg);} finally {svg.remove();}
+  equal(describeTarget(window,document.head),null);
 });
 out.textContent += `\n${passes} passed, ${failures} failed`;
 document.title = failures ? 'FAIL browser regressions' : 'PASS browser regressions';

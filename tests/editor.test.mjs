@@ -2,6 +2,23 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseSource, buildEditedCss, stepValue, createHistory, DEFAULT_VALUES, EDIT_START } from '../src/core/editor.js';
 
+test('generic edits keep dimensions separate, scope colors and preserve transparency values', () => {
+  const css = buildEditedCss('/* original */', {'picked-1':{
+    target:{generic:true,name:'按钮 */',selector:'#one'},
+    origin:{x:2,y:3}, values:{...DEFAULT_VALUES,width:120,opacity:75,textColor:'#123456'},changed:['width','textColor','opacity'],
+  }});
+  assert.match(css,/width: 120px/);assert.ok(!css.includes('height:'));
+  assert.match(css,/color: #123456/);assert.match(css,/opacity: 0.75/);
+  assert.ok(!css.includes('#one img'));assert.match(css,/:where\(#one\)/);
+  assert.ok(css.startsWith('/* original */'));assert.ok(!css.includes('按钮 */'));
+});
+test('generic numeric fields enforce their own bounds', () => {
+  assert.equal(stepValue(DEFAULT_VALUES,'width',-500).width,1);
+  assert.equal(stepValue(DEFAULT_VALUES,'height',3000).height,2000);
+  assert.equal(stepValue(DEFAULT_VALUES,'opacity',5).opacity,100);
+  assert.equal(stepValue(DEFAULT_VALUES,'fontSize',-500).fontSize,8);
+});
+
 test('composer lift preserves host positioning, keyboard rules, transform and safe-area variables', () => {
   const source = '#form_sheld{position:relative;padding-bottom:var(--tt-inset-bottom);transform:scale(.99)}';
   const css = buildEditedCss(source, { composer: { values: { ...DEFAULT_VALUES, lift: 7 }, changed: ['lift'], origin: { x: 2, y: 3 } } });

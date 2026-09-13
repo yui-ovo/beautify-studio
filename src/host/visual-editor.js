@@ -4,6 +4,7 @@ import { extractImages, replaceImages, validateImageUrl } from '../core/images.j
 import { embedImage } from './images.js';
 import { cssString, editTextCss, readCssString } from '../core/text.js';
 import { inspectText } from './text.js';
+import { describeTarget, isPickable } from './picker.js';
 import { searchCss } from '../core/search.js';
 import PANEL_CSS from '../ui/studio.css';
 
@@ -41,6 +42,8 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
   const $$ = selector => [...root.querySelectorAll(selector)];
   $('.ve-theme-name').textContent = theme.name;
   const baseline = {};
+  const customTargets = {};
+  const targetInfo = key => TARGETS[key] || customTargets[key] || state.edits[key]?.target;
   const observer = new hostWin.MutationObserver(() => {
     if (nativeStyle.textContent !== original) { dispose(false); onClose('酒馆已切换或修改主题，微调预览已结束。'); }
   });
@@ -64,7 +67,7 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
     previewStyle.textContent = css; nativeStyle.setAttribute('media', 'not all');
   }
   function visibleTarget(key) {
-    const nodes = [...doc.querySelectorAll(TARGETS[key].selector)].filter(n => n.getClientRects().length);
+    const nodes = [...doc.querySelectorAll(targetInfo(key).selector)].filter(n => n.getClientRects().length);
     return nodes.find(n => { const r = n.getBoundingClientRect(); return r.top > 50 && r.bottom < hostWin.innerHeight - 180; }) || nodes.at(-1);
   }
   function getBaseline(key) {
@@ -77,12 +80,13 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
     const number = (value, fallback) => Number.isFinite(parseFloat(value)) ? parseFloat(value) : fallback;
     const rgb = cs.borderTopColor.match(/^rgba?\(\s*(\d+)[, ]+\s*(\d+)[, ]+\s*(\d+)/);
     const color = rgb ? '#' + rgb.slice(1, 4).map(value => Number(value).toString(16).padStart(2, '0')).join('') : DEFAULT_VALUES.color;
+    const hex = value => { const match = value.match(/^rgba?\(\s*(\d+)[, ]+\s*(\d+)[, ]+\s*(\d+)/); return match ? '#' + match.slice(1,4).map(n => Number(n).toString(16).padStart(2,'0')).join('') : '#ffffff'; };
     const radius = cs.borderTopLeftRadius.endsWith('%') ? number(cs.width, 48) * number(cs.borderTopLeftRadius, 0) / 100 : number(cs.borderTopLeftRadius, 0);
     const shellStyle = key === 'composer' && doc.querySelector('#form_sheld') ? hostWin.getComputedStyle(doc.querySelector('#form_sheld')) : null;
     const backgroundStyle = doc.querySelector('[data-bs-background]') ? hostWin.getComputedStyle(doc.querySelector('[data-bs-background]')) : shellStyle;
     const backgroundEditable = !backgroundStyle || backgroundStyle.backgroundImage !== 'none' || !['transparent', 'rgba(0, 0, 0, 0)'].includes(backgroundStyle.backgroundColor);
     baseline[key] = {
-      values: { ...DEFAULT_VALUES, size: Math.round(number(cs.width, 48)), radius: Math.round(radius), border: Math.round(number(cs.borderTopWidth, 0)), color, gap: number(shellStyle?.getPropertyValue('--bs-background-offset'), 0) },
+      values: { ...DEFAULT_VALUES, size: Math.round(number(cs.width, 48)), radius: Math.round(radius), border: Math.round(number(cs.borderTopWidth, 0)), color, width: Math.round(number(cs.width, node.getBoundingClientRect().width)), height: Math.round(number(cs.height, node.getBoundingClientRect().height)), fontSize: Math.round(number(cs.fontSize,16)), textColor:hex(cs.color), backgroundColor:hex(cs.backgroundColor), opacity:Math.round(number(cs.opacity,1)*100), gap: number(shellStyle?.getPropertyValue('--bs-background-offset'), 0) },
       origin: { x: movable ? parseFloat(parts[0]) : 0, y: movable ? parseFloat(parts[1] || '0') : 0, backgroundEditable }, movable,
     };
     return baseline[key];
@@ -95,31 +99,51 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
     radius: { title: '圆角', help: '数值越大，头像的边角越圆。', min: 0, max: 100 },
     border: { title: '边框', help: '调整边框粗细；设为 0 就是没有边框。', min: 0, max: 12 },
     lift: { title: '上下位置', help: '0 是原位置；正数抬高，负数降低。底栏仍跟随酒馆原有的键盘布局。', min: -120, max: 200 },
+    width: { title:'宽度', help:'调整选中元素的宽度，可能改变周围排版。', min:1,max:2000 },
+    height: { title:'高度', help:'调整选中元素的高度，可能改变周围排版。', min:1,max:2000 },
+    fontSize: { title:'字号', help:'手动设置选中元素的字号；继承字号的内部文字会一起变化。', min:8,max:120 },
+    textColor: { title:'文字颜色', help:'修改选中元素的文字颜色；继承颜色的内部文字会一起变化。' },
+    backgroundColor: { title:'背景颜色', help:'修改底色，原来的背景图片仍会覆盖在底色上。' },
+    opacity: { title:'不透明度', help:'100 完全显示，0 完全透明；内部内容会一起变化。', min:0,max:100 },
     gap: { title: '底部背景高度', help: '0 为原背景；正数向上延伸背景，负数缩短。输入框位置和系统安全区保持不变。', min: -120, max: 200 },
   };
   function render() {
     const v = values(), info = meta[mode], available = Boolean(visibleTarget(targetKey));
-    const composer = targetKey === 'composer';
+    const composer = targetKey === 'composer', generic = Boolean(targetInfo(targetKey)?.generic), colorMode = ['textColor','backgroundColor'].includes(mode);
+    const modes = generic ? targetInfo(targetKey).modes : composer ? ['lift','gap'] : ['position','size','radius','border'];
     $('.ve-properties').dataset.composer = String(composer);
     $('.ve-controller').dataset.composer = String(composer);
-    $$('[data-mode]').forEach(el => el.hidden = composer !== ['lift', 'gap'].includes(el.dataset.mode));
+    $$('[data-mode]').forEach(el => el.hidden = !modes.includes(el.dataset.mode));
+    $('.ve-picked').hidden = !generic;
+    $('.ve-targets').hidden = generic;
+    $('.ve-picked-name').textContent = generic ? targetInfo(targetKey).name : '';
+    $('.ve-picked-scope').textContent = generic ? targetInfo(targetKey).structural ? '按这个位置定位；界面结构变化后需重新确认。' : '仅选中的元素；修改文字或透明度可能影响其内部内容。' : '';
+    $('[data-action="pick-parent"]').disabled = !isPickable(currentTarget?.parentElement);
+    const selected = $('.ve-picked-list'); selected.replaceChildren();
+    for (const [key, target] of Object.entries(customTargets)) { const option = doc.createElement('option'); option.value=key; option.textContent=target.name; option.selected=key===targetKey; selected.append(option); }
     $('.ve-lift-buttons').hidden = mode !== 'lift';
     $$('[data-target]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.target === targetKey)));
     $$('[data-mode]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.mode === mode)));
-    $('.ve-scope').firstChild.textContent = `作用于${TARGETS[targetKey].scope} `;
-    $('.ve-property-title').textContent = composer ? mode === 'gap' ? info.title : `输入栏${info.title}` : `头像${info.title}`;
-    $('.ve-controller-title').textContent = `${TARGETS[targetKey].name} · ${info.title}`;
-    $('.ve-help').textContent = mode === 'gap' && getBaseline(targetKey)?.origin.backgroundEditable === false ? '未识别到独立的底栏背景。这款美化可能把背景画在其他元素上，暂不能单独调节。' : info.help;
+    $('.ve-scope').firstChild.textContent = `作用于${targetInfo(targetKey).scope} `;
+    $('.ve-property-title').textContent = composer ? mode === 'gap' ? info.title : `输入栏${info.title}` : generic ? info.title : `头像${info.title}`;
+    $('.ve-controller-title').textContent = `${targetInfo(targetKey).name} · ${info.title}`;
+    $('.ve-help').textContent = generic && mode === 'position' ? '移动选中元素及其内容，不挤动周围排版。' : mode === 'gap' && getBaseline(targetKey)?.origin.backgroundEditable === false ? '未识别到独立的底栏背景。这款美化可能把背景画在其他元素上，暂不能单独调节。' : info.help;
     $('.ve-controller-caption').textContent = mode === 'position' ? `X ${v.x} / Y ${v.y} px` : info.help;
-    $('.ve-scalar').hidden = mode === 'position'; $('.ve-range').hidden = mode === 'position';
-    $('.ve-position-values').hidden = mode !== 'position'; $('.ve-color-row').hidden = mode !== 'border';
+    $('.ve-scalar').hidden = mode === 'position' || colorMode; $('.ve-range').hidden = mode === 'position' || colorMode;
+    $('.ve-position-values').hidden = mode !== 'position'; $('.ve-color-row').hidden = mode !== 'border' && !colorMode;
+    $('.ve-color-row').firstChild.textContent = colorMode ? info.title : '边框颜色';
+    $('.ve-color').setAttribute('aria-label', colorMode ? info.title : '边框颜色');
+    $('.ve-unit').textContent = colorMode ? '' : mode === 'opacity' ? '%' : 'PX';
+    $('.ve-scalar label span').textContent = mode === 'opacity' ? '%' : 'px';
+    $('.ve-controller-scalar small').textContent = mode === 'opacity' ? '%' : 'px';
+    $('.ve-handheld').hidden = colorMode;
     $('.ve-dpad').hidden = mode !== 'position'; $('.ve-controller-scalar').hidden = mode === 'position';
     $('.ve-x').value = v.x; $('.ve-y').value = v.y;
-    if (mode !== 'position') {
+    if (mode !== 'position' && !colorMode) {
       for (const el of [$('.ve-number'), $('.ve-range')]) { el.min = info.min; el.max = info.max; el.value = v[mode]; }
       $('.ve-mini-value').textContent = v[mode];
     }
-    $('.ve-color').value = v.color;
+    $('.ve-color').value = colorMode ? v[mode] : v.color;
     $$('[data-action="undo"]').forEach(el => el.disabled = !history.canUndo || imageBusy);
     $('[data-action="redo"]').disabled = !history.canRedo || imageBusy;
     $$('[data-nudge], [data-direction], [data-lift], .ve-number, .ve-range, .ve-x, .ve-y, .ve-color').forEach(el => el.disabled = !available || imageBusy || (mode === 'gap' && getBaseline(targetKey)?.origin.backgroundEditable === false) || (['position', 'lift'].includes(mode) && !getBaseline(targetKey)?.movable));
@@ -141,32 +165,37 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
       const r = currentTarget.getBoundingClientRect();
       outline.hidden = r.bottom < 45 || r.top > hostWin.innerHeight;
       outline.style.cssText = `left:${r.left - 6}px;top:${r.top - 6}px;width:${r.width + 12}px;height:${r.height + 12}px;`;
-      outline.querySelector('span').textContent = TARGETS[targetKey].name;
+      outline.querySelector('span').textContent = targetInfo(targetKey).name;
     } else outline.hidden = true;
     raf = hostWin.requestAnimationFrame(updateOutline);
   }
   function locate(scroll = true) {
     currentTarget = visibleTarget(targetKey);
-    if (!currentTarget) { feedback(`当前画面没有${TARGETS[targetKey].name}，请打开一段含这类消息的聊天。`); return; }
-    if (scroll && targetKey !== 'composer') currentTarget.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    if (!currentTarget) { feedback(`当前画面没有${targetInfo(targetKey).name}，请打开一段含这类消息的聊天。`); return; }
+    if (scroll && targetKey !== 'composer' && !targetInfo(targetKey).generic) currentTarget.scrollIntoView({ block: 'center', behavior: 'smooth' });
     getBaseline(targetKey); render();
   }
   function commit(next, label, group = mode) {
     if (imageBusy || !getBaseline(targetKey)) return;
     if (group === 'gap' && getBaseline(targetKey).origin.backgroundEditable === false) return;
     if (['position','lift'].includes(group) && !getBaseline(targetKey).movable) return;
-    state.edits[targetKey] = { values: next, origin: getBaseline(targetKey).origin, changed: [...new Set([...(state.edits[targetKey]?.changed || []), group])] };
+    state.edits[targetKey] = { target: customTargets[targetKey], values: next, origin: getBaseline(targetKey).origin, changed: [...new Set([...(state.edits[targetKey]?.changed || []), group])] };
     history.push(state); writeCss(composeCss()); render(); feedback(label);
+    const editedKey = targetKey;
     // Check the property actually won the cascade rather than reporting a fake successful edit.
     hostWin.requestAnimationFrame(() => {
-      if (destroyed || !currentTarget) return;
+      if (destroyed || suspended || targetKey !== editedKey || !currentTarget) return;
       const cs = hostWin.getComputedStyle(currentTarget);
       const origin = getBaseline(targetKey).origin;
-      const expected = mode === 'size' ? [cs.width, next.size] : mode === 'radius' ? [cs.borderTopLeftRadius, next.radius] : mode === 'border' ? [cs.borderTopWidth, next.border] : mode === 'lift' ? [cs.translate.split(/\s+/)[1] || '0', origin.y - next.lift] : null;
+      const expected = group === 'size' ? [cs.width, next.size] : group === 'radius' ? [cs.borderTopLeftRadius, next.radius] : group === 'border' ? [cs.borderTopWidth, next.border] : group === 'lift' ? [cs.translate.split(/\s+/)[1] || '0', origin.y - next.lift] : ['width','height','fontSize'].includes(group) ? [cs[group],next[group]] : group === 'opacity' ? [String(Number(cs.opacity)*100),next.opacity] : null;
       if (expected && Math.abs(parseFloat(expected[0]) - expected[1]) > 1) feedback('有其他样式影响了效果；可撤销本次调整并查看作者说明。');
+      if (['textColor','backgroundColor'].includes(group)) {
+        const rgb = cs[group === 'textColor' ? 'color' : 'backgroundColor'].match(/^rgba?\(\s*(\d+)[, ]+\s*(\d+)[, ]+\s*(\d+)/);
+        if (rgb && '#' + rgb.slice(1,4).map(n => Number(n).toString(16).padStart(2,'0')).join('') !== next[group]) feedback('有其他样式影响了颜色；可以撤销本次调整。');
+      }
     });
   }
-  function nudge(delta) { const v = stepValue(values(), mode, delta * step); commit(v, `${TARGETS[targetKey].name}${meta[mode].title}已调整为 ${v[mode]} px`); }
+  function nudge(delta) { const v = stepValue(values(), mode, delta * step); commit(v, `${targetInfo(targetKey).name}${meta[mode].title}已调整为 ${v[mode]} ${mode === 'opacity' ? '%' : 'px'}`); }
   function move(direction) {
     if (!getBaseline(targetKey)?.movable) { feedback('原美化使用了复杂位移，这一版暂不调整位置。'); return; }
     const property = ['left','right'].includes(direction) ? 'x' : 'y';
@@ -182,13 +211,18 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
   function pick(event) {
     if (!picking || event.composedPath().includes(host)) return;
     event.preventDefault(); event.stopImmediatePropagation();
-    const avatar = event.target.closest?.('#chat .mes .avatar');
-    const composer = event.target.closest?.('#send_form');
-    if (!avatar && !composer) { feedback('请点聊天头像或底部输入栏。'); return; }
-    targetKey = composer ? 'composer' : avatar.closest('.mes').getAttribute('is_user') === 'true' ? 'user' : 'character';
-    mode = composer ? 'lift' : 'radius';
-    $('.ve-controller').style.cssText = '';
-    currentTarget = composer || avatar; getBaseline(targetKey); compact = true; stopPick(); render(); feedback(`已选中${TARGETS[targetKey].name}，调整作用于${TARGETS[targetKey].scope}。`);
+    selectElement(event.target);
+  }
+  function selectElement(element) {
+    const choice = describeTarget(hostWin, element);
+    if (!choice) { feedback('这里暂不能选中，请点可见的按钮、文字、图片或容器。'); return; }
+    const existing = Object.keys(customTargets).find(key => customTargets[key].selector === choice.target.selector);
+    targetKey = existing || 'picked-' + (Object.keys(customTargets).length + 1);
+    customTargets[targetKey] = choice.target;
+    currentTarget = choice.node;
+    mode = choice.target.modes.includes('fontSize') ? 'fontSize' : 'radius';
+    getBaseline(targetKey); compact = false; stopPick(); setPage('parts'); render();
+    feedback('已选中' + choice.target.name + '；可选外层，或打开手柄边看边调。');
   }
   function renderNotes(query = '') {
     const container = $('.ve-notes'); container.replaceChildren();
@@ -239,8 +273,8 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
         button.addEventListener('click', () => {
           if (/is_user\s*=\s*["']?true/.test(note.selector)) targetKey = 'user';
           else if (/is_user\s*=\s*["']?false/.test(note.selector)) targetKey = 'character';
-          else if (targetKey === 'composer') targetKey = 'character';
-          if (['lift', 'gap'].includes(mode)) mode = 'radius';
+          else targetKey = 'character';
+          if (!['position','size','radius','border'].includes(mode)) mode = 'radius';
           setPage('parts'); locate();
         }); card.append(button);
       }
@@ -329,9 +363,9 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
     }
     for (const [key, edit] of Object.entries(state.edits)) for (const item of edit.changed) {
       const row = doc.createElement('div'); row.className = 've-change'; const label = doc.createElement('span'), value = doc.createElement('b');
-      label.textContent = `${TARGETS[key].name} · ${meta[item].title}`;
+      label.textContent = `${targetInfo(key).name} · ${meta[item].title}`;
       const prev = baseline[key]?.values || DEFAULT_VALUES;
-      value.textContent = item === 'position' ? `X ${edit.values.x} / Y ${edit.values.y} px` : `${prev[item]} → ${edit.values[item]} px`;
+      value.textContent = ['textColor','backgroundColor'].includes(item) ? edit.values[item] : item === 'position' ? `X ${edit.values.x} / Y ${edit.values.y} px` : `${prev[item]} → ${edit.values[item]} ${item === 'opacity' ? '%' : 'px'}`;
       row.append(label, value); container.append(row);
     }
     for (const [id, asset] of Object.entries(state.images)) {
@@ -400,6 +434,7 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
     if (name === 'compact') return setCompact(true);
     if (name === 'expand') return setCompact(false);
     if (name === 'locate') return locate();
+    if (name === 'pick-parent') { selectElement(currentTarget?.parentElement); return; }
     if (name === 'pick') { picking = true; $('.ve-sheet').hidden = true; $('.ve-controller').hidden = true; $('.ve-pick-hint').hidden = false; return; }
     if (name === 'cancel-pick') return stopPick();
     if (name === 'close') { dispose(true); onClose('已关闭微调，恢复原美化。'); return; }
@@ -429,7 +464,7 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
     if (button.dataset.workspace === 'library') { if (suspend()) onNavigateLibrary?.(); return; }
     if (button.dataset.workspace === 'editor') return;
     if (button.dataset.action) { void action(button.dataset.action); return; }
-    if (button.dataset.target) { targetKey = button.dataset.target; mode = targetKey === 'composer' ? 'lift' : ['lift','gap'].includes(mode) ? 'radius' : mode; locate(); render(); feedback(`已选中${TARGETS[targetKey].name}。`); }
+    if (button.dataset.target) { targetKey = button.dataset.target; mode = targetKey === 'composer' ? 'lift' : ['position','size','radius','border'].includes(mode) ? mode : 'radius'; locate(); render(); feedback(`已选中${targetInfo(targetKey).name}。`); }
     if (button.dataset.mode) { mode = button.dataset.mode; render(); }
     if (button.dataset.tab) setPage(button.dataset.tab);
     if (button.dataset.step) { step = Number(button.dataset.step); $$('[data-step]').forEach(el => el.setAttribute('aria-pressed', String(Number(el.dataset.step) === step))); }
@@ -454,7 +489,8 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
   });
   $('.ve-range').addEventListener('input', event => { const v = { ...values(), [mode]: Number(event.target.value) }; commit(v, `已设置为 ${v[mode]} px`); });
   for (const key of ['x','y']) $(`.ve-${key}`).addEventListener('change', event => { if (!Number.isFinite(Number(event.target.value))) return render(); commit(stepValue(values(), key, Number(event.target.value) - values()[key]), '已更新头像位置。', 'position'); });
-  $('.ve-color').addEventListener('input', event => commit({ ...values(), color: event.target.value }, '已更新边框颜色。', 'border'));
+  $('.ve-color').addEventListener('input', event => { const property = ['textColor','backgroundColor'].includes(mode) ? mode : 'color'; commit({ ...values(), [property]:event.target.value }, '已更新颜色。', property === 'color' ? 'border' : mode); });
+  $('.ve-picked-list').addEventListener('change', event => { targetKey=event.target.value; currentTarget=visibleTarget(targetKey); mode=targetInfo(targetKey).modes.includes('fontSize') ? 'fontSize' : 'radius'; locate(false); render(); });
   $('.ve-search input').addEventListener('input', event => renderNotes(event.target.value));
   let drag;
   $('.ve-grip').addEventListener('pointerdown', event => {
@@ -480,16 +516,16 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
   const themeSelect = doc.querySelector('#themes');
   function themeChanged() { if (!saving) { dispose(true); onClose('已切换主题，微调预览已结束。'); } }
   themeSelect?.addEventListener('change', themeChanged);
-  doc.addEventListener('click', pick, true);
+  hostWin.addEventListener('click', pick, true);
   function blockPickFocus(event) {
-    if (picking && !event.composedPath().includes(host)) event.preventDefault();
+    if (picking && !event.composedPath().includes(host)) { event.preventDefault(); event.stopImmediatePropagation(); }
   }
-  doc.addEventListener('pointerdown', blockPickFocus, true);
+  hostWin.addEventListener('pointerdown', blockPickFocus, true);
   function dispose() {
     if (destroyed) return; destroyed = true; endHold(); observer.disconnect(); hostWin.cancelAnimationFrame(raf);
     previewStyle.remove(); restoreNativeMedia();
-    doc.removeEventListener('click', pick, true); themeSelect?.removeEventListener('change', themeChanged);
-    doc.removeEventListener('pointerdown', blockPickFocus, true);
+    hostWin.removeEventListener('click', pick, true); themeSelect?.removeEventListener('change', themeChanged);
+    hostWin.removeEventListener('pointerdown', blockPickFocus, true);
     hostWin.removeEventListener('pointerup', endHold); hostWin.removeEventListener('pointercancel', endHold); hostWin.removeEventListener('blur', endHold);
     host.remove(); initialFocus?.focus?.();
   }
