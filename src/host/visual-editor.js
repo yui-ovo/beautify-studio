@@ -2,9 +2,9 @@ import { TARGETS, DEFAULT_VALUES, parseSource, buildEditedCss, stepValue, create
 import { editorMarkup } from '../ui/editor-markup.js';
 import { extractImages, replaceImages, validateImageUrl } from '../core/images.js';
 import { embedImage } from './images.js';
-import { cssString, editTextCss, readCssString } from '../core/text.js';
+import { cssString, editTextCss, readCssString, removeStudioFontOverrides } from '../core/text.js';
 import { inspectText } from './text.js';
-import { describeTarget, isPickable } from './picker.js';
+import { describeTarget, isPickable, createPickGuides, watchSelectionLayout } from './picker.js';
 import { searchCss } from '../core/search.js';
 import PANEL_CSS from '../ui/studio.css';
 
@@ -25,11 +25,12 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
   let draft = original;
   let state = { source: original, edits: {}, images: {}, text: {}, placeholder: null };
   const textResources = inspectText(hostWin, nativeStyle);
+  const legacyFonts = removeStudioFontOverrides(original);
   const nativeInput = doc.querySelector('#send_textarea');
   const originalPlaceholder = nativeInput ? readCssString(hostWin.getComputedStyle(nativeInput).getPropertyValue('--bs-placeholder')) ?? nativeInput.getAttribute('placeholder') ?? '' : '';
   const history = createHistory(state);
   let targetKey = 'character', mode = 'radius', step = 1, compact = false, picking = false, destroyed = false, saving = false;
-  let currentTarget, raf, heldTimer, heldInterval, heldButton = null, heldUntil = 0;
+  let currentTarget, layoutWatch, heldTimer, heldInterval, heldButton = null, heldUntil = 0;
   let suspended = false;
   const initialFocus = doc.activeElement;
   const host = doc.createElement('div');
@@ -41,6 +42,7 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
   const $ = selector => root.querySelector(selector);
   const $$ = selector => [...root.querySelectorAll(selector)];
   $('.ve-theme-name').textContent = theme.name;
+  const pickGuides = createPickGuides(hostWin, $('.ve-pick-guides'));
   const baseline = {};
   const customTargets = {};
   const targetInfo = key => TARGETS[key] || customTargets[key] || state.edits[key]?.target;
@@ -56,6 +58,7 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
   function composeCss() {
     const replacements = Object.fromEntries(Object.entries(state.images).map(([id, asset]) => [id, imageAssets.get(asset).url]));
     let css = editTextCss(replaceImages(state.source, replacements), state.text);
+    if (state.removeFonts) css = removeStudioFontOverrides(css).css;
     css = buildEditedCss(css, state.edits);
     if (state.placeholder !== null) css += `\n/* 输入框提示文字 · 美化工作室 */\nhtml body #send_textarea#send_textarea { --bs-placeholder: ${cssString(state.placeholder)}; }\n`;
     return css;
@@ -86,7 +89,7 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
     const backgroundStyle = doc.querySelector('[data-bs-background]') ? hostWin.getComputedStyle(doc.querySelector('[data-bs-background]')) : shellStyle;
     const backgroundEditable = !backgroundStyle || backgroundStyle.backgroundImage !== 'none' || !['transparent', 'rgba(0, 0, 0, 0)'].includes(backgroundStyle.backgroundColor);
     baseline[key] = {
-      values: { ...DEFAULT_VALUES, size: Math.round(number(cs.width, 48)), radius: Math.round(radius), border: Math.round(number(cs.borderTopWidth, 0)), color, width: Math.round(number(cs.width, node.getBoundingClientRect().width)), height: Math.round(number(cs.height, node.getBoundingClientRect().height)), fontSize: Math.round(number(cs.fontSize,16)), textColor:hex(cs.color), backgroundColor:hex(cs.backgroundColor), opacity:Math.round(number(cs.opacity,1)*100), gap: number(shellStyle?.getPropertyValue('--bs-background-offset'), 0) },
+      values: { ...DEFAULT_VALUES, size: Math.round(number(cs.width, 48)), radius: Math.round(radius), border: Math.round(number(cs.borderTopWidth, 0)), color, width: Math.round(number(cs.width, node.getBoundingClientRect().width)), height: Math.round(number(cs.height, node.getBoundingClientRect().height)), textColor:hex(cs.color), backgroundColor:hex(cs.backgroundColor), opacity:Math.round(number(cs.opacity,1)*100), gap: number(shellStyle?.getPropertyValue('--bs-background-offset'), 0) },
       origin: { x: movable ? parseFloat(parts[0]) : 0, y: movable ? parseFloat(parts[1] || '0') : 0, backgroundEditable }, movable,
     };
     return baseline[key];
@@ -101,7 +104,6 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
     lift: { title: '上下位置', help: '0 是原位置；正数抬高，负数降低。底栏仍跟随酒馆原有的键盘布局。', min: -120, max: 200 },
     width: { title:'宽度', help:'调整选中元素的宽度，可能改变周围排版。', min:1,max:2000 },
     height: { title:'高度', help:'调整选中元素的高度，可能改变周围排版。', min:1,max:2000 },
-    fontSize: { title:'字号', help:'手动设置选中元素的字号；继承字号的内部文字会一起变化。', min:8,max:120 },
     textColor: { title:'文字颜色', help:'修改选中元素的文字颜色；继承颜色的内部文字会一起变化。' },
     backgroundColor: { title:'背景颜色', help:'修改底色，原来的背景图片仍会覆盖在底色上。' },
     opacity: { title:'不透明度', help:'100 完全显示，0 完全透明；内部内容会一起变化。', min:0,max:100 },
@@ -127,8 +129,8 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
     $('.ve-scope').firstChild.textContent = `作用于${targetInfo(targetKey).scope} `;
     $('.ve-property-title').textContent = composer ? mode === 'gap' ? info.title : `输入栏${info.title}` : generic ? info.title : `头像${info.title}`;
     $('.ve-controller-title').textContent = `${targetInfo(targetKey).name} · ${info.title}`;
-    $('.ve-help').textContent = generic && mode === 'position' ? '移动选中元素及其内容，不挤动周围排版。' : mode === 'gap' && getBaseline(targetKey)?.origin.backgroundEditable === false ? '未识别到独立的底栏背景。这款美化可能把背景画在其他元素上，暂不能单独调节。' : info.help;
-    $('.ve-controller-caption').textContent = mode === 'position' ? `X ${v.x} / Y ${v.y} px` : info.help;
+    $('.ve-help').textContent = generic && mode === 'radius' ? '数值越大，选中元素的边角越圆。' : generic && mode === 'position' ? '移动选中元素及其内容，不挤动周围排版。' : mode === 'gap' && getBaseline(targetKey)?.origin.backgroundEditable === false ? '未识别到独立的底栏背景。这款美化可能把背景画在其他元素上，暂不能单独调节。' : info.help;
+    $('.ve-controller-caption').textContent = mode === 'position' ? `X ${v.x} / Y ${v.y} px` : $('.ve-help').textContent;
     $('.ve-scalar').hidden = mode === 'position' || colorMode; $('.ve-range').hidden = mode === 'position' || colorMode;
     $('.ve-position-values').hidden = mode !== 'position'; $('.ve-color-row').hidden = mode !== 'border' && !colorMode;
     $('.ve-color-row').firstChild.textContent = colorMode ? info.title : '边框颜色';
@@ -153,9 +155,12 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
     $('.ve-draft').textContent = history.canUndo ? '未保存' : '草稿';
     $$('.ve-image-card button, .ve-image-card input').forEach(el => el.disabled = imageBusy);
     renderChanges();
+    if (layoutWatch) layoutWatch.schedule();
+    else updateOutline();
   }
   function updateOutline() {
     if (destroyed || suspended) return;
+    if (picking) { $('.ve-outline').hidden = true; pickGuides.update(); return; }
     if (!currentTarget?.isConnected || !currentTarget.getClientRects().length) {
       const nextTarget = visibleTarget(targetKey);
       if (nextTarget !== currentTarget) { currentTarget = nextTarget; render(); }
@@ -167,7 +172,13 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
       outline.style.cssText = `left:${r.left - 6}px;top:${r.top - 6}px;width:${r.width + 12}px;height:${r.height + 12}px;`;
       outline.querySelector('span').textContent = targetInfo(targetKey).name;
     } else outline.hidden = true;
-    raf = hostWin.requestAnimationFrame(updateOutline);
+
+  }
+  function syncLayoutWatch() {
+    layoutWatch?.stop(); layoutWatch = null;
+    if (!picking) pickGuides.clear();
+    if (!destroyed && !suspended && (picking || compact)) layoutWatch = watchSelectionLayout(hostWin, host, updateOutline);
+    else if (!destroyed && !suspended) updateOutline();
   }
   function locate(scroll = true) {
     currentTarget = visibleTarget(targetKey);
@@ -187,7 +198,7 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
       if (destroyed || suspended || targetKey !== editedKey || !currentTarget) return;
       const cs = hostWin.getComputedStyle(currentTarget);
       const origin = getBaseline(targetKey).origin;
-      const expected = group === 'size' ? [cs.width, next.size] : group === 'radius' ? [cs.borderTopLeftRadius, next.radius] : group === 'border' ? [cs.borderTopWidth, next.border] : group === 'lift' ? [cs.translate.split(/\s+/)[1] || '0', origin.y - next.lift] : ['width','height','fontSize'].includes(group) ? [cs[group],next[group]] : group === 'opacity' ? [String(Number(cs.opacity)*100),next.opacity] : null;
+      const expected = group === 'size' ? [cs.width, next.size] : group === 'radius' ? [cs.borderTopLeftRadius, next.radius] : group === 'border' ? [cs.borderTopWidth, next.border] : group === 'lift' ? [cs.translate.split(/\s+/)[1] || '0', origin.y - next.lift] : ['width','height'].includes(group) ? [cs[group],next[group]] : group === 'opacity' ? [String(Number(cs.opacity)*100),next.opacity] : null;
       if (expected && Math.abs(parseFloat(expected[0]) - expected[1]) > 1) feedback('有其他样式影响了效果；可撤销本次调整并查看作者说明。');
       if (['textColor','backgroundColor'].includes(group)) {
         const rgb = cs[group === 'textColor' ? 'color' : 'backgroundColor'].match(/^rgba?\(\s*(\d+)[, ]+\s*(\d+)[, ]+\s*(\d+)/);
@@ -205,13 +216,13 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
   function setCompact(value) {
     compact = value; $('.ve-sheet').hidden = value; $('.ve-controller').hidden = !value;
     if (!value) $('.ve-controller').style.cssText = '';
-    render();
+    syncLayoutWatch(); render();
   }
-  function stopPick() { picking = false; $('.ve-pick-hint').hidden = true; $('.ve-controller').hidden = !compact; $('.ve-sheet').hidden = compact; }
+  function stopPick() { picking = false; $('.ve-pick-hint').hidden = true; $('.ve-controller').hidden = !compact; $('.ve-sheet').hidden = compact; syncLayoutWatch(); }
   function pick(event) {
     if (!picking || event.composedPath().includes(host)) return;
     event.preventDefault(); event.stopImmediatePropagation();
-    selectElement(event.target);
+    selectElement(pickGuides.targetFor(event.target));
   }
   function selectElement(element) {
     const choice = describeTarget(hostWin, element);
@@ -220,7 +231,7 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
     targetKey = existing || 'picked-' + (Object.keys(customTargets).length + 1);
     customTargets[targetKey] = choice.target;
     currentTarget = choice.node;
-    mode = choice.target.modes.includes('fontSize') ? 'fontSize' : 'radius';
+    mode = choice.target.modes.includes('radius') ? 'radius' : choice.target.modes[0];
     getBaseline(targetKey); compact = false; stopPick(); setPage('parts'); render();
     feedback('已选中' + choice.target.name + '；可选外层，或打开手柄边看边调。');
   }
@@ -354,9 +365,12 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
     for (const edit of Object.values(state.text)) {
       const row = doc.createElement('div'); row.className = 've-change';
       const label = doc.createElement('span'), value = doc.createElement('b');
-      label.textContent = edit.kind === 'font' ? '正文字号' : '输入框提示文字';
-      value.textContent = edit.kind === 'font' ? `${edit.value} px` : edit.value || '（留空）';
+      label.textContent = '输入框提示文字';
+      value.textContent = edit.value || '（留空）';
       row.append(label, value); container.append(row);
+    }
+    if (state.removeFonts) {
+      const row = doc.createElement('div'); row.className = 've-change'; row.textContent = `已清理 ${legacyFonts.count} 处工作室旧版字号覆盖`; container.append(row);
     }
     if (state.placeholder !== null) {
       const row = doc.createElement('div'); row.className = 've-change'; row.textContent = `输入框提示文字 → ${state.placeholder || '（留空）'}`; container.append(row);
@@ -384,27 +398,14 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
   }
   function renderText() {
     const container = $('.ve-text-settings'); container.replaceChildren();
-    for (const font of textResources.fonts) {
+    if (legacyFonts.count) {
       const card = doc.createElement('article'); card.className = 've-text-card';
-      const title = doc.createElement('b'); title.textContent = '正文字号';
-      const note = doc.createElement('small'); note.textContent = `已确认不跟随酒馆字体比例 · 第 ${font.line} 行`;
-      const controls = doc.createElement('div'); controls.className = 've-font-controls';
-      const input = doc.createElement('input'); input.type = 'number'; input.min = '8'; input.max = '48'; input.step = '1'; input.setAttribute('aria-label', `正文字号，第 ${font.line} 行`);
-      input.value = state.text[font.id]?.value ?? font.size;
-      const set = value => {
-        if (saving || imageBusy || !Number.isFinite(value)) return;
-        value = Math.round(Math.min(48, Math.max(8, value)) * 10) / 10;
-        if (value === (state.text[font.id]?.value ?? font.size)) return;
-        state.text[font.id] = { kind: 'font', value, selectors: font.selectors }; saveTextChange();
-      };
-      const minus = doc.createElement('button'), plus = doc.createElement('button');
-      minus.innerHTML = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 12h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
-      plus.innerHTML = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 12h12M12 6v12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
-      minus.setAttribute('aria-label', '减小正文字号'); plus.setAttribute('aria-label', '增大正文字号');
-      minus.onclick = () => set(Number(input.value) - 1); plus.onclick = () => set(Number(input.value) + 1);
-      input.onchange = () => { if (input.value !== '') set(Number(input.value)); };
-      const unit = doc.createElement('span'); unit.textContent = 'px';
-      controls.append(minus, input, unit, plus); card.append(title, note, controls); container.append(card);
+      const title = doc.createElement('b'); title.textContent = '清理旧版字号修改';
+      const note = doc.createElement('small'); note.textContent = '只清理有工作室标记的字号覆盖，保留原美化设置。可撤销，保存后生效。';
+      const button = doc.createElement('button'); button.dataset.action = 'remove-fonts';
+      button.textContent = state.removeFonts ? '已清理，可撤销' : '清理 ' + legacyFonts.count + ' 处旧版字号覆盖';
+      button.disabled = Boolean(state.removeFonts) || saving || imageBusy;
+      card.append(title, note, button); container.append(card);
     }
     const textarea = doc.querySelector('#send_textarea');
     const hints = textResources.hints.length ? textResources.hints : textarea ? [{ id: 'native', text: originalPlaceholder }] : [];
@@ -435,7 +436,11 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
     if (name === 'expand') return setCompact(false);
     if (name === 'locate') return locate();
     if (name === 'pick-parent') { selectElement(currentTarget?.parentElement); return; }
-    if (name === 'pick') { picking = true; $('.ve-sheet').hidden = true; $('.ve-controller').hidden = true; $('.ve-pick-hint').hidden = false; return; }
+    if (name === 'pick') { picking = true; $('.ve-sheet').hidden = true; $('.ve-controller').hidden = true; $('.ve-pick-hint').hidden = false; syncLayoutWatch(); return; }
+    if (name === 'remove-fonts') {
+      if (!legacyFonts.count || state.removeFonts) return;
+      state.removeFonts = true; history.push(state); restoreHistory(state, '已清理可识别的旧版字号覆盖；可撤销，保存后写入原美化。'); return;
+    }
     if (name === 'cancel-pick') return stopPick();
     if (name === 'close') { dispose(true); onClose('已关闭微调，恢复原美化。'); return; }
     if (name === 'reset-all') { const initial = { source: original, edits: {}, images: {}, text: {}, placeholder: null }; history.push(initial); return restoreHistory(initial, '已还原全部调整，可撤销。'); }
@@ -490,7 +495,7 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
   $('.ve-range').addEventListener('input', event => { const v = { ...values(), [mode]: Number(event.target.value) }; commit(v, `已设置为 ${v[mode]} px`); });
   for (const key of ['x','y']) $(`.ve-${key}`).addEventListener('change', event => { if (!Number.isFinite(Number(event.target.value))) return render(); commit(stepValue(values(), key, Number(event.target.value) - values()[key]), '已更新头像位置。', 'position'); });
   $('.ve-color').addEventListener('input', event => { const property = ['textColor','backgroundColor'].includes(mode) ? mode : 'color'; commit({ ...values(), [property]:event.target.value }, '已更新颜色。', property === 'color' ? 'border' : mode); });
-  $('.ve-picked-list').addEventListener('change', event => { targetKey=event.target.value; currentTarget=visibleTarget(targetKey); mode=targetInfo(targetKey).modes.includes('fontSize') ? 'fontSize' : 'radius'; locate(false); render(); });
+  $('.ve-picked-list').addEventListener('change', event => { targetKey=event.target.value; currentTarget=visibleTarget(targetKey); mode=targetInfo(targetKey).modes.includes('radius') ? 'radius' : targetInfo(targetKey).modes[0]; locate(false); render(); });
   $('.ve-search input').addEventListener('input', event => renderNotes(event.target.value));
   let drag;
   $('.ve-grip').addEventListener('pointerdown', event => {
@@ -522,7 +527,7 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
   }
   hostWin.addEventListener('pointerdown', blockPickFocus, true);
   function dispose() {
-    if (destroyed) return; destroyed = true; endHold(); observer.disconnect(); hostWin.cancelAnimationFrame(raf);
+    if (destroyed) return; destroyed = true; endHold(); observer.disconnect(); layoutWatch?.stop(); layoutWatch = null; pickGuides.clear();
     previewStyle.remove(); restoreNativeMedia();
     hostWin.removeEventListener('click', pick, true); themeSelect?.removeEventListener('change', themeChanged);
     hostWin.removeEventListener('pointerdown', blockPickFocus, true);
@@ -531,7 +536,7 @@ export function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, 
   }
   function suspend() {
     if (destroyed || saving || imageBusy) return false;
-    endHold(); stopPick(); suspended = true; hostWin.cancelAnimationFrame(raf);
+    endHold(); stopPick(); suspended = true; layoutWatch?.stop(); layoutWatch = null; pickGuides.clear();
     previewStyle.textContent = ''; restoreNativeMedia(); host.style.setProperty('display', 'none', 'important');
     return true;
   }

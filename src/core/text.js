@@ -15,27 +15,43 @@ export function textDeclarations(source) {
   let index = 0;
   postcss.parse(source).walkDecls(decl => {
     const id = String(index++);
-    if (decl.parent.type !== 'rule' || !['font', 'font-size', 'content'].includes(decl.prop.toLowerCase())) return;
+    if (decl.parent.type !== 'rule' || decl.prop.toLowerCase() !== 'content') return;
     entries.push({ id, property: decl.prop.toLowerCase(), value: decl.value, selector: decl.parent.selector, line: decl.source.start.line });
   });
   return entries;
 }
 
-// Keep declaration indices stable: insert scoped font rules only after walking.
 export function editTextCss(source, changes = {}) {
   if (!Object.keys(changes).length) return source;
-  const root = postcss.parse(source), additions = [];
+  const root = postcss.parse(source);
   let index = 0;
   root.walkDecls(decl => {
     const edit = changes[String(index++)];
     if (!edit) return;
     if (decl.prop.toLowerCase() === 'content' && edit.kind === 'content') decl.value = cssString(edit.value);
-    if (['font-size', 'font'].includes(decl.prop.toLowerCase()) && edit.kind === 'font' && edit.selectors?.length && Number.isFinite(edit.value)) {
-      const rule = postcss.rule({ selector: edit.selectors.join(',\n') });
-      rule.append({ prop: 'font-size', value: `${Math.min(48, Math.max(8, edit.value))}px`, important: true });
-      additions.push([decl.parent, rule]);
-    }
   });
-  for (const [anchor, rule] of additions) anchor.after(rule);
   return root.toString();
+}
+
+// Only v1.7 generic edits have both an owned block and an owned selector.
+// Earlier scoped font rules have no provenance marker: never guess their owner.
+export function removeStudioFontOverrides(source) {
+  let root;
+  try { root = postcss.parse(source); } catch { return { css: source, count: 0 }; }
+  let count = 0;
+  function clean(container) {
+    let owned = false;
+    for (const node of [...container.nodes || []]) {
+      if (node.type === 'comment' && node.text.trim() === '=== BEAUTIFY_VISUAL_START ===') owned = true;
+      else if (node.type === 'comment' && node.text.trim() === '=== BEAUTIFY_VISUAL_END ===') owned = false;
+      else if (owned && node.type === 'rule' && node.selector.startsWith(':is(#beautify-specificity#beautify-specificity, ') && node.selector.includes('):where(')) {
+        for (const decl of [...node.nodes]) {
+          if (decl.type === 'decl' && decl.prop.toLowerCase() === 'font-size') { decl.remove(); count++; }
+        }
+        if (!node.nodes.length) node.remove();
+      } else if (node.type === 'atrule' && node.nodes) clean(node);
+    }
+  }
+  clean(root);
+  return { css: count ? root.toString() : source, count };
 }

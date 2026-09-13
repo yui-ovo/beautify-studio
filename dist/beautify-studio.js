@@ -4578,7 +4578,7 @@ var require_lib = __commonJS({
 });
 
 // src/config.js
-var VERSION = "1.7.0";
+var VERSION = "1.8.0";
 var BUTTON_NAME = "美化工作室";
 var STORAGE_KEY = "tt-theme-helper-options-v2";
 var OVERLAY_HOST_ID = "tt-theme-helper-overlay-host";
@@ -5617,13 +5617,18 @@ h3 { font-size:15px; font-weight:600; }
 @media(max-width:370px){.ve-tabs{margin-left:12px;margin-right:12px}.ve-tabs button{font-size:11px!important}.ve-tabs button span{font-size:9px}}
 
 /* Text and independent composer controls */
-.ve-property-icon{display:block;width:23px;height:23px;margin:0 auto 4px}.ve-text-settings{margin-top:16px}.ve-text-card{background:#fffffc;border:1px solid #dce2d4;border-radius:12px;padding:14px;margin-bottom:12px}.ve-text-card b,.ve-text-card label{display:block;font-size:13px}.ve-text-card small{display:block;font-size:11px;line-height:1.7;color:#838b79;margin:7px 0}.ve-text-card input[type="text"]{display:block;width:100%;box-sizing:border-box;margin-top:10px;border:1px solid #dce2d4;border-radius:8px;background:#f8faf5;padding:10px;font-size:14px}.ve-text-card button{border:1px solid #d6ddce;border-radius:8px;padding:8px 12px;background:#edf1e6;font-size:12px}.ve-font-controls{display:flex;gap:10px;align-items:center}.ve-font-controls input{width:65px;min-width:0;text-align:center;font-size:20px;border:0;background:transparent}.ve-font-controls button{display:flex;align-items:center;justify-content:center;width:38px;height:38px;padding:0}.ve-font-controls button:last-child{margin-left:auto}.ve-font-controls svg{width:22px;height:22px}.ve-font-controls span{font-size:11px;color:#88917e}
+.ve-property-icon{display:block;width:23px;height:23px;margin:0 auto 4px}.ve-text-settings{margin-top:16px}.ve-text-card{background:#fffffc;border:1px solid #dce2d4;border-radius:12px;padding:14px;margin-bottom:12px}.ve-text-card b,.ve-text-card label{display:block;font-size:13px}.ve-text-card small{display:block;font-size:11px;line-height:1.7;color:#838b79;margin:7px 0}.ve-text-card input[type="text"]{display:block;width:100%;box-sizing:border-box;margin-top:10px;border:1px solid #dce2d4;border-radius:8px;background:#f8faf5;padding:10px;font-size:14px}.ve-text-card button{border:1px solid #d6ddce;border-radius:8px;padding:8px 12px;background:#edf1e6;font-size:12px}
 
 /* Persistent two-page navigation */
 .panel>.body{min-height:0;flex:1}.workspace-nav{display:flex;align-items:center;justify-content:center;gap:8px;flex:0 0 auto;padding:10px 18px max(12px,env(safe-area-inset-bottom));border-top:1px solid #dce0da;background:#f5f6f2;color:#747a72;pointer-events:auto}.workspace-nav button{display:flex!important;align-items:center;justify-content:center;gap:9px;border:0!important;border-radius:24px;padding:11px 19px!important;background:transparent;font-size:12px!important;line-height:1.3!important;min-height:44px;white-space:nowrap}.workspace-nav button svg{width:20px;height:20px}.workspace-nav button[aria-current="page"]{background:#fff!important;color:#344431;box-shadow:0 2px 12px #34443110}.ve-sheet>.workspace-nav{border-radius:0 0 22px 22px}.ve-search-summary{font-size:12px;color:#6c7964;margin:0 0 12px}.ve-note mark{background:#e1eab5;color:#35442b;border-radius:2px;padding:0 1px}.ve-search-more{display:block;width:100%;border:1px solid #dce2d4!important;padding:11px!important;border-radius:10px;background:#eff3e8!important;font-size:12px!important}.ve-note pre{overflow-wrap:anywhere;white-space:pre-wrap}
 @media(max-width:700px){.workspace-nav{padding:8px 12px max(9px,env(safe-area-inset-bottom));gap:7px}.workspace-nav button{flex:1;padding:10px 12px!important}.ve-sheet{height:min(680px,79dvh)}.ve-sheet>.workspace-nav{border-radius:0 0 21px 21px}}
 
 .ve-picked{margin:12px 0;padding:12px;border:1px solid #d6dfcc;border-radius:12px;background:#f2f5ec}.ve-picked>b{font-size:13px}.ve-picked p{font-size:11px;line-height:1.7;margin:7px 0;color:#79846f}.ve-picked>div{display:flex;gap:8px}.ve-picked button{padding:7px 12px!important;border:1px solid #d5decb!important;border-radius:8px;background:#fff!important;font-size:12px!important}.ve-picked label{display:flex;gap:10px;align-items:center;font-size:11px;margin-top:10px}.ve-picked select{max-width:65%;flex:1;border:1px solid #d5decb;border-radius:6px;background:#fff;color:#43553b;padding:7px;font:inherit}.ve-mini-modes{flex-wrap:wrap}.ve-pick-hint{max-width:calc(100vw - 20px);white-space:normal;text-align:center}.ve-properties>button>span:only-child{padding:7px 0}
+
+/* Picker guides are paint-only overlays, never borders on host elements. */
+.ve-pick-guides{position:fixed;inset:0;pointer-events:none;overflow:hidden}.ve-pick-box{position:fixed;border:1px dashed #687b58;border-radius:7px;background:#e5efce12;box-sizing:border-box;pointer-events:none}.ve-pick-box>span{position:absolute;left:2px;top:2px;max-width:calc(100% - 4px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:#f6faefee;color:#405335;border:1px solid #adba9e;border-radius:4px;padding:1px 4px;font:10px/1.5 system-ui,sans-serif;pointer-events:none}.ve-pick-hint{z-index:2}
+
+.ve-pick-hint{width:max-content;max-width:calc(100vw - 24px);display:flex;align-items:center;justify-content:center;gap:10px;box-sizing:border-box}.ve-pick-hint button{flex-shrink:0;margin-left:0}
 `;
 
 // node_modules/postcss/lib/postcss.mjs
@@ -5662,7 +5667,7 @@ var TARGETS = {
   user: { name: "我的头像", scope: "全部用户消息", selector: '#chat .mes[is_user="true"] .avatar', icon: "◎" },
   composer: { name: "底部输入栏", scope: "输入框与底栏按钮", selector: "#send_form", icon: "▤" }
 };
-var DEFAULT_VALUES = { x: 0, y: 0, size: 48, radius: 12, border: 0, color: "#727c73", lift: 0, gap: 0, width: 100, height: 40, fontSize: 16, textColor: "#303331", backgroundColor: "#ffffff", opacity: 100 };
+var DEFAULT_VALUES = { x: 0, y: 0, size: 48, radius: 12, border: 0, color: "#727c73", lift: 0, gap: 0, width: 100, height: 40, textColor: "#303331", backgroundColor: "#ffffff", opacity: 100 };
 function parseSource(css) {
   const root2 = postcss_default.parse(String(css || ""));
   const comments = [];
@@ -5679,7 +5684,7 @@ function parseSource(css) {
   return comments;
 }
 function stepValue(values, property, delta) {
-  const bounds = { x: [-300, 300], y: [-300, 300], size: [16, 200], radius: [0, 100], border: [0, 12], lift: [-120, 200], gap: [-120, 200], width: [1, 2e3], height: [1, 2e3], fontSize: [8, 120], opacity: [0, 100] };
+  const bounds = { x: [-300, 300], y: [-300, 300], size: [16, 200], radius: [0, 100], border: [0, 12], lift: [-120, 200], gap: [-120, 200], width: [1, 2e3], height: [1, 2e3], opacity: [0, 100] };
   const [min, max] = bounds[property];
   return { ...values, [property]: Math.min(max, Math.max(min, Math.round((values[property] + delta) * 10) / 10)) };
 }
@@ -5709,7 +5714,6 @@ html body #form_sheld#form_sheld#form_sheld {
     if (changed.includes("border")) declarations.push(`border: ${v.border}px solid ${v.color} !important; box-sizing: border-box !important;`);
     if (target.generic) {
       for (const property of ["width", "height"]) if (changed.includes(property)) declarations.push(`${property}: ${v[property]}px !important; min-${property}: ${v[property]}px !important; max-${property}: ${v[property]}px !important;`);
-      if (changed.includes("fontSize")) declarations.push(`font-size: ${v.fontSize}px !important;`);
       if (changed.includes("opacity")) declarations.push(`opacity: ${v.opacity / 100} !important;`);
       for (const [property, css] of [["textColor", "color"], ["backgroundColor", "background-color"]]) if (changed.includes(property) && /^#[0-9a-f]{6}$/i.test(v[property])) declarations.push(`${css}: ${v[property]} !important;`);
     }
@@ -5766,8 +5770,9 @@ var historyIcon = (redo = false) => `<svg class="ve-history-icon" viewBox="0 0 2
 function editorMarkup() {
   return `<div class="visual-editor">
     <header class="ve-masthead"><span class="ve-brand">✦ <b>美化工作室</b><i>BEAUTIFY STUDIO</i></span><span class="ve-live"><i></i> 实时预览</span></header>
+    <div class="ve-pick-guides" aria-hidden="true"></div>
     <div class="ve-outline" hidden><span></span></div>
-    <div class="ve-pick-hint" hidden>点一下要调整的文字、按钮、图片或区域 <button data-action="cancel-pick">取消</button></div>
+    <div class="ve-pick-hint" hidden>点框内选择 · 滑动查看更多 <button data-action="cancel-pick">取消</button></div>
     <section class="ve-sheet" aria-label="可视化美化编辑器">
       <div class="ve-sheet-head"><div><span class="ve-eyebrow">MAKE IT YOURS / 01</span></div><button class="ve-icon" data-action="close" aria-label="关闭并放弃修改">×</button></div>
       <div class="ve-theme"><span class="ve-theme-icon">◈</span><div><small>正在编辑 · 当前美化</small><b class="ve-theme-name"></b></div><span class="ve-draft">草稿</span></div>
@@ -5778,7 +5783,7 @@ function editorMarkup() {
           <div class="ve-targets"><button data-target="character" aria-pressed="true"><span>✧</span><b>角色头像</b><small>聊天里的 TA</small><i>↗</i></button><button data-target="user" aria-pressed="false"><span>◎</span><b>我的头像</b><small>聊天里的我</small><i>↗</i></button><button class="ve-composer-target" data-target="composer" aria-pressed="false"><span>▤</span><b>底部输入栏</b><small>上下位置 · 底部背景高度</small><i>↗</i></button></div>
           <div class="ve-picked" hidden><b class="ve-picked-name"></b><p class="ve-picked-scope"></p><div><button data-action="pick-parent">选外层</button><button data-action="pick">重新点选</button><button data-target="character">快捷部位</button></div><label>已点选的元素<select class="ve-picked-list" aria-label="已点选的元素"></select></label></div><p class="ve-scope">作用于全部角色消息 <button class="ve-text" data-action="locate">定位 ↗</button></p>
           <div class="ve-section-label"><span>02 / 想调整什么</span><span class="ve-dim">所见即所得</span></div>
-          <div class="ve-properties"><button data-mode="width" hidden><span>宽度</span></button><button data-mode="height" hidden><span>高度</span></button><button data-mode="fontSize" hidden><span>字号</span></button><button data-mode="textColor" hidden><span>文字颜色</span></button><button data-mode="backgroundColor" hidden><span>背景颜色</span></button><button data-mode="opacity" hidden><span>不透明度</span></button><button data-mode="position" aria-pressed="false">✥<span>位置</span></button><button data-mode="size" aria-pressed="false">↗<span>大小</span></button><button data-mode="radius" aria-pressed="true">▢<span>圆角</span></button><button data-mode="border" aria-pressed="false">◉<span>边框</span></button><button data-mode="lift" hidden>${verticalIcon}<span>上下位置</span></button><button data-mode="gap" hidden>▥<span>底部背景高度</span></button></div>
+          <div class="ve-properties"><button data-mode="width" hidden><span>宽度</span></button><button data-mode="height" hidden><span>高度</span></button><button data-mode="textColor" hidden><span>文字颜色</span></button><button data-mode="backgroundColor" hidden><span>背景颜色</span></button><button data-mode="opacity" hidden><span>不透明度</span></button><button data-mode="position" aria-pressed="false">✥<span>位置</span></button><button data-mode="size" aria-pressed="false">↗<span>大小</span></button><button data-mode="radius" aria-pressed="true">▢<span>圆角</span></button><button data-mode="border" aria-pressed="false">◉<span>边框</span></button><button data-mode="lift" hidden>${verticalIcon}<span>上下位置</span></button><button data-mode="gap" hidden>▥<span>底部背景高度</span></button></div>
           <div class="ve-value-card"><div class="ve-value-title"><b class="ve-property-title">头像圆角</b><span class="ve-unit">PX</span></div><div class="ve-scalar"><button data-nudge="minus" aria-label="减小数值">${stepIcon()}</button><label><input class="ve-number" type="number" min="0" max="100" step="1" aria-label="当前数值"><span>px</span></label><button data-nudge="plus" aria-label="增大数值">${stepIcon(true)}</button></div><div class="ve-position-values" hidden><label>水平 X<input class="ve-x" type="number" min="-300" max="300" aria-label="水平偏移"></label><label>垂直 Y<input class="ve-y" type="number" min="-300" max="300" aria-label="垂直偏移"></label></div><input class="ve-range" type="range" min="0" max="100" aria-label="拖动调整数值"><label class="ve-color-row" hidden>边框颜色<input class="ve-color" type="color" value="#727c73" aria-label="边框颜色"></label><p class="ve-help">数值越大，头像的边角越圆。</p></div>
           <button class="ve-handheld" data-action="compact"><span>✥</span><div><b>打开微调手柄</b><small>收起面板，留更多空间看效果</small></div><span>↗</span></button>
           <div class="ve-text-settings"></div><p class="ve-coming">点屏幕上的任意元素开始调整；上面的头像和输入栏是快捷入口。</p>
@@ -5790,7 +5795,7 @@ function editorMarkup() {
       <footer class="ve-footer"><div class="ve-feedback" role="status" aria-live="polite">试着把圆角加 1，看看头像的变化。</div><div class="ve-footer-actions"><button class="ve-icon" data-action="undo" aria-label="撤销">${historyIcon()}</button><button class="ve-icon" data-action="redo" aria-label="重做">${historyIcon(true)}</button><button class="ve-export" data-action="download">导出 JSON</button><button class="ve-save" data-action="save">保存当前美化</button></div><small>保存到原美化 · 未保存可关闭恢复</small></footer>
       ${workspaceNavigation("editor")}
     </section>
-    <section class="ve-controller" aria-label="微调手柄" hidden><div class="ve-controller-head"><span class="ve-grip" title="拖动手柄">⠿</span><b class="ve-controller-title">角色头像 · 圆角</b><button class="ve-text" data-action="expand">展开 ↗</button></div><div class="ve-mini-modes"><button data-mode="width" hidden>宽度</button><button data-mode="height" hidden>高度</button><button data-mode="fontSize" hidden>字号</button><button data-mode="opacity" hidden>不透明度</button><button data-mode="position">位置</button><button data-mode="size">大小</button><button data-mode="radius">圆角</button><button data-mode="border">边框</button><button data-mode="lift" hidden>上下位置</button><button data-mode="gap" hidden>底部背景高度</button></div><div class="ve-controller-body"><div class="ve-lift-buttons" hidden><button data-lift="up" aria-label="抬高底栏">↑ 抬高</button><button data-action="reset-mode" aria-label="还原底栏位置">◎</button><button data-lift="down" aria-label="降低底栏">↓ 降低</button></div><div class="ve-dpad"><button data-direction="up" aria-label="向上移动">↑</button><button data-direction="left" aria-label="向左移动">←</button><button data-action="reset-mode" aria-label="还原当前调整项">◎</button><button data-direction="right" aria-label="向右移动">→</button><button data-direction="down" aria-label="向下移动">↓</button></div><div class="ve-controller-scalar"><button data-nudge="minus" aria-label="手柄减小数值">${stepIcon()}</button><span><b class="ve-mini-value">6</b><small>px</small></span><button data-nudge="plus" aria-label="手柄增大数值">${stepIcon(true)}</button></div><div class="ve-controller-caption">圆角越大，边角越圆</div></div><div class="ve-controller-foot"><span>步长</span><button data-step="1" aria-pressed="true">1 px</button><button data-step="5" aria-pressed="false">5 px</button><button data-action="undo" aria-label="手柄撤销">${historyIcon()}</button><button class="ve-done" data-action="expand">完成</button></div><div class="ve-mini-status" role="status" aria-live="polite"></div></section>
+    <section class="ve-controller" aria-label="微调手柄" hidden><div class="ve-controller-head"><span class="ve-grip" title="拖动手柄">⠿</span><b class="ve-controller-title">角色头像 · 圆角</b><button class="ve-text" data-action="expand">展开 ↗</button></div><div class="ve-mini-modes"><button data-mode="width" hidden>宽度</button><button data-mode="height" hidden>高度</button><button data-mode="opacity" hidden>不透明度</button><button data-mode="position">位置</button><button data-mode="size">大小</button><button data-mode="radius">圆角</button><button data-mode="border">边框</button><button data-mode="lift" hidden>上下位置</button><button data-mode="gap" hidden>底部背景高度</button></div><div class="ve-controller-body"><div class="ve-lift-buttons" hidden><button data-lift="up" aria-label="抬高底栏">↑ 抬高</button><button data-action="reset-mode" aria-label="还原底栏位置">◎</button><button data-lift="down" aria-label="降低底栏">↓ 降低</button></div><div class="ve-dpad"><button data-direction="up" aria-label="向上移动">↑</button><button data-direction="left" aria-label="向左移动">←</button><button data-action="reset-mode" aria-label="还原当前调整项">◎</button><button data-direction="right" aria-label="向右移动">→</button><button data-direction="down" aria-label="向下移动">↓</button></div><div class="ve-controller-scalar"><button data-nudge="minus" aria-label="手柄减小数值">${stepIcon()}</button><span><b class="ve-mini-value">6</b><small>px</small></span><button data-nudge="plus" aria-label="手柄增大数值">${stepIcon(true)}</button></div><div class="ve-controller-caption">圆角越大，边角越圆</div></div><div class="ve-controller-foot"><span>步长</span><button data-step="1" aria-pressed="true">1 px</button><button data-step="5" aria-pressed="false">5 px</button><button data-action="undo" aria-label="手柄撤销">${historyIcon()}</button><button class="ve-done" data-action="expand">完成</button></div><div class="ve-mini-status" role="status" aria-live="polite"></div></section>
   </div>`;
 }
 
@@ -5970,119 +5975,92 @@ function textDeclarations(source) {
   let index = 0;
   postcss_default.parse(source).walkDecls((decl2) => {
     const id = String(index++);
-    if (decl2.parent.type !== "rule" || !["font", "font-size", "content"].includes(decl2.prop.toLowerCase())) return;
+    if (decl2.parent.type !== "rule" || decl2.prop.toLowerCase() !== "content") return;
     entries.push({ id, property: decl2.prop.toLowerCase(), value: decl2.value, selector: decl2.parent.selector, line: decl2.source.start.line });
   });
   return entries;
 }
 function editTextCss(source, changes = {}) {
   if (!Object.keys(changes).length) return source;
-  const root2 = postcss_default.parse(source), additions = [];
+  const root2 = postcss_default.parse(source);
   let index = 0;
   root2.walkDecls((decl2) => {
     const edit = changes[String(index++)];
     if (!edit) return;
     if (decl2.prop.toLowerCase() === "content" && edit.kind === "content") decl2.value = cssString(edit.value);
-    if (["font-size", "font"].includes(decl2.prop.toLowerCase()) && edit.kind === "font" && edit.selectors?.length && Number.isFinite(edit.value)) {
-      const rule2 = postcss_default.rule({ selector: edit.selectors.join(",\n") });
-      rule2.append({ prop: "font-size", value: `${Math.min(48, Math.max(8, edit.value))}px`, important: true });
-      additions.push([decl2.parent, rule2]);
-    }
   });
-  for (const [anchor, rule2] of additions) anchor.after(rule2);
   return root2.toString();
+}
+function removeStudioFontOverrides(source) {
+  let root2;
+  try {
+    root2 = postcss_default.parse(source);
+  } catch {
+    return { css: source, count: 0 };
+  }
+  let count = 0;
+  function clean(container) {
+    let owned = false;
+    for (const node of [...container.nodes || []]) {
+      if (node.type === "comment" && node.text.trim() === "=== BEAUTIFY_VISUAL_START ===") owned = true;
+      else if (node.type === "comment" && node.text.trim() === "=== BEAUTIFY_VISUAL_END ===") owned = false;
+      else if (owned && node.type === "rule" && node.selector.startsWith(":is(#beautify-specificity#beautify-specificity, ") && node.selector.includes("):where(")) {
+        for (const decl2 of [...node.nodes]) {
+          if (decl2.type === "decl" && decl2.prop.toLowerCase() === "font-size") {
+            decl2.remove();
+            count++;
+          }
+        }
+        if (!node.nodes.length) node.remove();
+      } else if (node.type === "atrule" && node.nodes) clean(node);
+    }
+  }
+  clean(root2);
+  return { css: count ? root2.toString() : source, count };
 }
 
 // src/host/text.js
 function inspectText(win, style) {
-  const doc = win.document, fonts = [], hints = [];
+  const hints = [];
   let entries;
   try {
     entries = textDeclarations(style.textContent);
   } catch {
-    return { fonts, hints };
+    return { hints };
   }
-  const rules = [];
-  function walk(list2) {
-    for (const rule2 of list2) {
-      if (rule2.style && rule2.selectorText) rules.push(rule2);
+  const active = [];
+  function walk(rules) {
+    for (const rule2 of rules) {
+      if (rule2.type === win.CSSRule.MEDIA_RULE && !win.matchMedia(rule2.conditionText).matches) continue;
+      if (rule2.type === win.CSSRule.SUPPORTS_RULE && !win.CSS.supports(rule2.conditionText)) continue;
+      if (rule2.selectorText && rule2.style?.getPropertyValue("content")) active.push(rule2);
       if (rule2.cssRules) walk(rule2.cssRules);
     }
   }
   try {
     walk(style.sheet.cssRules);
   } catch {
-    return { fonts, hints };
-  }
-  const samples = [...doc.querySelectorAll("#chat .mes_text, #chat .mes_text p, #chat .mes_text span")].filter((n) => n.getClientRects().length).slice(-60);
-  const root2 = doc.documentElement;
-  const baseScale = parseFloat(win.getComputedStyle(root2).getPropertyValue("--fontScale"));
-  const before = samples.map((n) => parseFloat(win.getComputedStyle(n).fontSize));
-  const old = root2.style.getPropertyValue("--fontScale"), priority = root2.style.getPropertyPriority("--fontScale");
-  let fixed = [];
-  if (Number.isFinite(baseScale) && baseScale > 0) {
-    try {
-      root2.style.setProperty("--fontScale", String(baseScale * 0.75), "important");
-      fixed = samples.filter((n, i) => Math.abs(parseFloat(win.getComputedStyle(n).fontSize) - before[i]) < 0.1 && !win.getComputedStyle(n).transitionProperty.split(",").some((p) => ["all", "font-size"].includes(p.trim()) && win.getComputedStyle(n).transitionDuration !== "0s"));
-    } finally {
-      if (old) root2.style.setProperty("--fontScale", old, priority);
-      else root2.style.removeProperty("--fontScale");
-    }
+    return { hints };
   }
   for (const entry of entries) {
-    const candidates = rules.filter((r) => r.selectorText === entry.selector && r.style.getPropertyValue(entry.property).trim() === entry.value.trim());
-    if (candidates.length !== 1 || entries.filter((e) => e.selector === entry.selector && e.property === entry.property && e.value === entry.value).length !== 1) continue;
-    const rule2 = candidates[0];
-    if (["font-size", "font"].includes(entry.property)) {
-      if (/^(inherit|unset|revert|revert-layer)$/i.test(entry.value)) continue;
-      const affected = [], original = rule2.style.cssText;
-      const sizes = fixed.map((n) => parseFloat(win.getComputedStyle(n).fontSize));
+    const value = readCssString(entry.value);
+    if (value === null || !value.trim() || /^[\s\uE000-\uF8FF\u2190-\u2BFF]+$/u.test(value)) continue;
+    if (entries.filter((e) => e.selector === entry.selector && e.value === entry.value).length !== 1) continue;
+    if (!active.some((rule2) => rule2.selectorText === entry.selector && readCssString(rule2.style.getPropertyValue("content")) === value)) continue;
+    for (const selector of splitSelectors(entry.selector)) {
+      const match = selector.trim().match(/^(.*?)(::?before|::?after)$/);
+      if (!match) continue;
       try {
-        rule2.style.setProperty("font-size", "3px", rule2.style.getPropertyPriority("font-size"));
-        fixed.forEach((n, i) => {
-          if (Math.abs(parseFloat(win.getComputedStyle(n).fontSize) - sizes[i]) > 0.5) affected.push(n);
-        });
-      } finally {
-        rule2.style.cssText = original;
-      }
-      if (!affected.length) continue;
-      const selectors = /* @__PURE__ */ new Set();
-      for (const selector of splitSelectors(entry.selector)) {
-        try {
-          if (affected.some((n) => n.matches(selector))) selectors.add(`html body #chat#chat :is(.mes_text, .mes_text *)${`:is(${selector.trim()})`}`);
-          else if (affected.some((n) => n.closest(selector))) selectors.add(`:is(${selector.trim()}) #chat#chat .mes_text, #chat#chat:is(${selector.trim()}) .mes_text, #chat#chat :is(${selector.trim()}) .mes_text`);
-        } catch {
-        }
-      }
-      if (selectors.size) fonts.push({ ...entry, size: Math.round(parseFloat(win.getComputedStyle(affected[0]).fontSize) * 10) / 10, selectors: [...selectors] });
-    } else {
-      const value = readCssString(entry.value);
-      if (value === null || !value.trim()) continue;
-      for (const selector of splitSelectors(entry.selector)) {
-        const match = selector.trim().match(/^(.*?)(::?before|::?after)$/);
-        if (!match) continue;
-        try {
-          const node = doc.querySelector(match[1]);
-          if (!node || !(node.id === "form_sheld" || node.closest("#send_form")) || !node.getClientRects().length) continue;
-          const cs = win.getComputedStyle(node, match[2].replace(/^:([^:])/, "::$1"));
-          if (readCssString(cs.content) !== value || cs.display === "none" || cs.visibility === "hidden") continue;
-          if (/^[\s\uE000-\uF8FF\u2190-\u2BFF]+$/u.test(value)) continue;
-          const original = rule2.style.cssText;
-          let wins = false;
-          try {
-            rule2.style.setProperty("content", '"bs-hint-probe"', rule2.style.getPropertyPriority("content"));
-            wins = readCssString(win.getComputedStyle(node, match[2].replace(/^:([^:])/, "::$1")).content) === "bs-hint-probe";
-          } finally {
-            rule2.style.cssText = original;
-          }
-          if (wins) hints.push({ ...entry, text: value });
-          break;
-        } catch {
-        }
+        const node = win.document.querySelector(match[1]);
+        if (!node || !(node.id === "form_sheld" || node.closest("#send_form")) || !node.getClientRects().length) continue;
+        const cs = win.getComputedStyle(node, match[2].replace(/^:([^:])/, "::$1"));
+        if (readCssString(cs.content) === value && cs.display !== "none" && cs.visibility !== "hidden") hints.push({ ...entry, text: value });
+        break;
+      } catch {
       }
     }
   }
-  return { fonts, hints };
+  return { hints };
 }
 
 // src/host/picker.js
@@ -6126,10 +6104,117 @@ function describeTarget(win, element) {
   const text = ["button", "p", "span", "a", "label"].includes(node.localName) ? node.textContent.trim().replace(/\s+/g, " ").slice(0, 18) : "";
   const label = known[node.id] || node.getAttribute("aria-label") || node.getAttribute("title") || (names[node.localName] || "页面元素") + (text ? ` · ${text}` : "");
   const modes = ["position", "width", "height", "radius", "border", "textColor", "backgroundColor", "opacity"];
-  if (node.textContent?.trim() || node.matches("input,textarea,i,button,a")) modes.splice(3, 0, "fontSize");
   if (cs.display === "inline" && !node.matches("img,input,textarea")) modes.splice(0, 3);
-  if (node === doc.body) modes.splice(0, modes.length, "fontSize", "textColor", "backgroundColor");
+  if (node === doc.body) modes.splice(0, modes.length, "textColor", "backgroundColor");
   return { node, target: { name: label.slice(0, 32), selector, scope: "当前选中的元素", structural: structural || Boolean(node.closest("#chat .mes")), modes, generic: true } };
+}
+var primary = 'button,a,input,textarea,select,[role="button"],.avatar,.mes_text,#send_form,#top-settings-holder,img,svg';
+var MAX_PICK_GUIDES = 32;
+function collectPickGuides(win) {
+  const doc = win.document, width = win.innerWidth, height = win.innerHeight;
+  const candidates = [], seen = /* @__PURE__ */ new Set();
+  const columns = Math.min(10, Math.max(3, Math.ceil(width / 72)));
+  const rows = Math.min(16, Math.max(3, Math.ceil(height / 64)));
+  const points = [];
+  for (const id of ["send_form", "top-settings-holder"]) {
+    const area = doc.getElementById(id);
+    if (!area) continue;
+    const walker = doc.createTreeWalker(area, win.NodeFilter.SHOW_ELEMENT);
+    for (let i = 0, node; i < 32 && (node = walker.nextNode()); i++) {
+      if (!node.matches('button,a,input,textarea,select,[role="button"],i,svg')) continue;
+      const r = node.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+      if (r.width && r.height && x > 0 && x < width && y > 0 && y < height) points.push([x, y]);
+    }
+  }
+  for (let y = rows - 1; y >= 0; y--) for (let x = 0; x < columns; x++) points.push([(x + 0.5) * width / columns, (y + 0.5) * height / rows]);
+  for (const [x, y] of points) {
+    if (candidates.length >= MAX_PICK_GUIDES) break;
+    const hit = doc.elementsFromPoint(x, y).find(isPickable);
+    if (!hit) continue;
+    const node = hit.closest(primary) || hit;
+    if (!isPickable(node) || node === doc.body || seen.has(node)) continue;
+    seen.add(node);
+    if (!node.matches(primary) && node.children.length && !node.matches("p,label,h1,h2,h3,h4,h5,h6")) continue;
+    const r = node.getBoundingClientRect();
+    const cs = win.getComputedStyle(node);
+    if (r.width < 12 || r.height < 12 || r.bottom <= 0 || r.top >= height || cs.visibility !== "visible" || Number(cs.opacity) === 0) continue;
+    if (r.width * r.height > width * height * 0.85) continue;
+    if (candidates.some((item) => node.contains(item.node))) continue;
+    for (let i = candidates.length - 1; i >= 0; i--) if (candidates[i].node.contains(node)) candidates.splice(i, 1);
+    const label = known[node.id] || (node.matches(".avatar") ? "头像" : node.matches(".mes_text") ? "消息气泡" : node.getAttribute("aria-label") || node.getAttribute("title") || names[node.localName] || "区域");
+    candidates.push({ node, rect: r, label: label.slice(0, 18) });
+  }
+  return candidates;
+}
+function createPickGuides(win, layer) {
+  let candidates = [];
+  return {
+    update() {
+      candidates = collectPickGuides(win);
+      const fragment = win.document.createDocumentFragment();
+      for (const { rect: r, label } of candidates) {
+        const box = win.document.createElement("div");
+        box.className = "ve-pick-box";
+        const left = Math.max(1, r.left), top = Math.max(1, r.top);
+        box.style.cssText = `left:${left}px;top:${top}px;width:${Math.max(0, Math.min(win.innerWidth - 1, r.right) - left)}px;height:${Math.max(0, Math.min(win.innerHeight - 1, r.bottom) - top)}px;`;
+        const text = win.document.createElement("span");
+        text.textContent = label;
+        box.append(text);
+        fragment.append(box);
+      }
+      layer.replaceChildren(fragment);
+    },
+    targetFor(element) {
+      return candidates.find((item) => item.node.isConnected && item.node.contains(element))?.node || element;
+    },
+    clear() {
+      candidates = [];
+      layer.replaceChildren();
+    }
+  };
+}
+function watchSelectionLayout(win, host, refresh) {
+  let timer = 0, frame = 0, stopped = false;
+  const schedule = () => {
+    if (stopped || timer || frame) return;
+    timer = win.setTimeout(() => {
+      timer = 0;
+      frame = win.requestAnimationFrame(() => {
+        frame = 0;
+        if (!stopped) refresh();
+      });
+    }, 120);
+  };
+  const observer = new win.MutationObserver((records) => {
+    if (records.some((record) => {
+      const element = record.target.nodeType === 1 ? record.target : record.target.parentElement;
+      return element && element !== host && !host.contains(element) && !element.closest("#beautify-visual-editor,[data-bs-background]");
+    })) schedule();
+  });
+  observer.observe(win.document.body, { subtree: true, childList: true, attributes: true, characterData: true });
+  const resize = win.ResizeObserver ? new win.ResizeObserver(schedule) : null;
+  resize?.observe(win.document.body);
+  win.addEventListener("scroll", schedule, { capture: true, passive: true });
+  win.addEventListener("resize", schedule, { passive: true });
+  win.addEventListener("load", schedule, true);
+  win.visualViewport?.addEventListener("resize", schedule);
+  win.visualViewport?.addEventListener("scroll", schedule);
+  refresh();
+  return {
+    schedule,
+    stop() {
+      stopped = true;
+      observer.disconnect();
+      resize?.disconnect();
+      win.clearTimeout(timer);
+      win.cancelAnimationFrame(frame);
+      win.removeEventListener("scroll", schedule, true);
+      win.removeEventListener("resize", schedule);
+      win.removeEventListener("load", schedule, true);
+      win.visualViewport?.removeEventListener("resize", schedule);
+      win.visualViewport?.removeEventListener("scroll", schedule);
+    }
+  };
 }
 
 // src/core/search.js
@@ -6178,11 +6263,12 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, onNavig
   let draft = original;
   let state = { source: original, edits: {}, images: {}, text: {}, placeholder: null };
   const textResources = inspectText(hostWin, nativeStyle);
+  const legacyFonts = removeStudioFontOverrides(original);
   const nativeInput = doc.querySelector("#send_textarea");
   const originalPlaceholder = nativeInput ? readCssString(hostWin.getComputedStyle(nativeInput).getPropertyValue("--bs-placeholder")) ?? nativeInput.getAttribute("placeholder") ?? "" : "";
   const history = createHistory(state);
   let targetKey = "character", mode = "radius", step = 1, compact = false, picking = false, destroyed = false, saving = false;
-  let currentTarget, raf, heldTimer, heldInterval, heldButton = null, heldUntil = 0;
+  let currentTarget, layoutWatch, heldTimer, heldInterval, heldButton = null, heldUntil = 0;
   let suspended = false;
   const initialFocus = doc.activeElement;
   const host = doc.createElement("div");
@@ -6199,6 +6285,7 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, onNavig
   const $ = (selector) => root2.querySelector(selector);
   const $$ = (selector) => [...root2.querySelectorAll(selector)];
   $(".ve-theme-name").textContent = theme.name;
+  const pickGuides = createPickGuides(hostWin, $(".ve-pick-guides"));
   const baseline = {};
   const customTargets = {};
   const targetInfo = (key) => TARGETS[key] || customTargets[key] || state.edits[key]?.target;
@@ -6216,6 +6303,7 @@ function openVisualEditor({ hostWin, theme, onClose, onSave, onDownload, onNavig
   function composeCss() {
     const replacements = Object.fromEntries(Object.entries(state.images).map(([id, asset]) => [id, imageAssets.get(asset).url]));
     let css = editTextCss(replaceImages(state.source, replacements), state.text);
+    if (state.removeFonts) css = removeStudioFontOverrides(css).css;
     css = buildEditedCss(css, state.edits);
     if (state.placeholder !== null) css += `
 /* 输入框提示文字 · 美化工作室 */
@@ -6254,7 +6342,7 @@ html body #send_textarea#send_textarea { --bs-placeholder: ${cssString(state.pla
     const backgroundStyle = doc.querySelector("[data-bs-background]") ? hostWin.getComputedStyle(doc.querySelector("[data-bs-background]")) : shellStyle;
     const backgroundEditable = !backgroundStyle || backgroundStyle.backgroundImage !== "none" || !["transparent", "rgba(0, 0, 0, 0)"].includes(backgroundStyle.backgroundColor);
     baseline[key] = {
-      values: { ...DEFAULT_VALUES, size: Math.round(number(cs.width, 48)), radius: Math.round(radius), border: Math.round(number(cs.borderTopWidth, 0)), color, width: Math.round(number(cs.width, node.getBoundingClientRect().width)), height: Math.round(number(cs.height, node.getBoundingClientRect().height)), fontSize: Math.round(number(cs.fontSize, 16)), textColor: hex(cs.color), backgroundColor: hex(cs.backgroundColor), opacity: Math.round(number(cs.opacity, 1) * 100), gap: number(shellStyle?.getPropertyValue("--bs-background-offset"), 0) },
+      values: { ...DEFAULT_VALUES, size: Math.round(number(cs.width, 48)), radius: Math.round(radius), border: Math.round(number(cs.borderTopWidth, 0)), color, width: Math.round(number(cs.width, node.getBoundingClientRect().width)), height: Math.round(number(cs.height, node.getBoundingClientRect().height)), textColor: hex(cs.color), backgroundColor: hex(cs.backgroundColor), opacity: Math.round(number(cs.opacity, 1) * 100), gap: number(shellStyle?.getPropertyValue("--bs-background-offset"), 0) },
       origin: { x: movable ? parseFloat(parts[0]) : 0, y: movable ? parseFloat(parts[1] || "0") : 0, backgroundEditable },
       movable
     };
@@ -6275,7 +6363,6 @@ html body #send_textarea#send_textarea { --bs-placeholder: ${cssString(state.pla
     lift: { title: "上下位置", help: "0 是原位置；正数抬高，负数降低。底栏仍跟随酒馆原有的键盘布局。", min: -120, max: 200 },
     width: { title: "宽度", help: "调整选中元素的宽度，可能改变周围排版。", min: 1, max: 2e3 },
     height: { title: "高度", help: "调整选中元素的高度，可能改变周围排版。", min: 1, max: 2e3 },
-    fontSize: { title: "字号", help: "手动设置选中元素的字号；继承字号的内部文字会一起变化。", min: 8, max: 120 },
     textColor: { title: "文字颜色", help: "修改选中元素的文字颜色；继承颜色的内部文字会一起变化。" },
     backgroundColor: { title: "背景颜色", help: "修改底色，原来的背景图片仍会覆盖在底色上。" },
     opacity: { title: "不透明度", help: "100 完全显示，0 完全透明；内部内容会一起变化。", min: 0, max: 100 },
@@ -6308,8 +6395,8 @@ html body #send_textarea#send_textarea { --bs-placeholder: ${cssString(state.pla
     $(".ve-scope").firstChild.textContent = `作用于${targetInfo(targetKey).scope} `;
     $(".ve-property-title").textContent = composer ? mode === "gap" ? info.title : `输入栏${info.title}` : generic ? info.title : `头像${info.title}`;
     $(".ve-controller-title").textContent = `${targetInfo(targetKey).name} · ${info.title}`;
-    $(".ve-help").textContent = generic && mode === "position" ? "移动选中元素及其内容，不挤动周围排版。" : mode === "gap" && getBaseline(targetKey)?.origin.backgroundEditable === false ? "未识别到独立的底栏背景。这款美化可能把背景画在其他元素上，暂不能单独调节。" : info.help;
-    $(".ve-controller-caption").textContent = mode === "position" ? `X ${v.x} / Y ${v.y} px` : info.help;
+    $(".ve-help").textContent = generic && mode === "radius" ? "数值越大，选中元素的边角越圆。" : generic && mode === "position" ? "移动选中元素及其内容，不挤动周围排版。" : mode === "gap" && getBaseline(targetKey)?.origin.backgroundEditable === false ? "未识别到独立的底栏背景。这款美化可能把背景画在其他元素上，暂不能单独调节。" : info.help;
+    $(".ve-controller-caption").textContent = mode === "position" ? `X ${v.x} / Y ${v.y} px` : $(".ve-help").textContent;
     $(".ve-scalar").hidden = mode === "position" || colorMode;
     $(".ve-range").hidden = mode === "position" || colorMode;
     $(".ve-position-values").hidden = mode !== "position";
@@ -6342,9 +6429,16 @@ html body #send_textarea#send_textarea { --bs-placeholder: ${cssString(state.pla
     $(".ve-draft").textContent = history.canUndo ? "未保存" : "草稿";
     $$(".ve-image-card button, .ve-image-card input").forEach((el) => el.disabled = imageBusy);
     renderChanges();
+    if (layoutWatch) layoutWatch.schedule();
+    else updateOutline();
   }
   function updateOutline() {
     if (destroyed || suspended) return;
+    if (picking) {
+      $(".ve-outline").hidden = true;
+      pickGuides.update();
+      return;
+    }
     if (!currentTarget?.isConnected || !currentTarget.getClientRects().length) {
       const nextTarget = visibleTarget(targetKey);
       if (nextTarget !== currentTarget) {
@@ -6359,7 +6453,13 @@ html body #send_textarea#send_textarea { --bs-placeholder: ${cssString(state.pla
       outline.style.cssText = `left:${r.left - 6}px;top:${r.top - 6}px;width:${r.width + 12}px;height:${r.height + 12}px;`;
       outline.querySelector("span").textContent = targetInfo(targetKey).name;
     } else outline.hidden = true;
-    raf = hostWin.requestAnimationFrame(updateOutline);
+  }
+  function syncLayoutWatch() {
+    layoutWatch?.stop();
+    layoutWatch = null;
+    if (!picking) pickGuides.clear();
+    if (!destroyed && !suspended && (picking || compact)) layoutWatch = watchSelectionLayout(hostWin, host, updateOutline);
+    else if (!destroyed && !suspended) updateOutline();
   }
   function locate(scroll = true) {
     currentTarget = visibleTarget(targetKey);
@@ -6385,7 +6485,7 @@ html body #send_textarea#send_textarea { --bs-placeholder: ${cssString(state.pla
       if (destroyed || suspended || targetKey !== editedKey || !currentTarget) return;
       const cs = hostWin.getComputedStyle(currentTarget);
       const origin = getBaseline(targetKey).origin;
-      const expected = group === "size" ? [cs.width, next.size] : group === "radius" ? [cs.borderTopLeftRadius, next.radius] : group === "border" ? [cs.borderTopWidth, next.border] : group === "lift" ? [cs.translate.split(/\s+/)[1] || "0", origin.y - next.lift] : ["width", "height", "fontSize"].includes(group) ? [cs[group], next[group]] : group === "opacity" ? [String(Number(cs.opacity) * 100), next.opacity] : null;
+      const expected = group === "size" ? [cs.width, next.size] : group === "radius" ? [cs.borderTopLeftRadius, next.radius] : group === "border" ? [cs.borderTopWidth, next.border] : group === "lift" ? [cs.translate.split(/\s+/)[1] || "0", origin.y - next.lift] : ["width", "height"].includes(group) ? [cs[group], next[group]] : group === "opacity" ? [String(Number(cs.opacity) * 100), next.opacity] : null;
       if (expected && Math.abs(parseFloat(expected[0]) - expected[1]) > 1) feedback("有其他样式影响了效果；可撤销本次调整并查看作者说明。");
       if (["textColor", "backgroundColor"].includes(group)) {
         const rgb = cs[group === "textColor" ? "color" : "backgroundColor"].match(/^rgba?\(\s*(\d+)[, ]+\s*(\d+)[, ]+\s*(\d+)/);
@@ -6412,6 +6512,7 @@ html body #send_textarea#send_textarea { --bs-placeholder: ${cssString(state.pla
     $(".ve-sheet").hidden = value;
     $(".ve-controller").hidden = !value;
     if (!value) $(".ve-controller").style.cssText = "";
+    syncLayoutWatch();
     render();
   }
   function stopPick() {
@@ -6419,12 +6520,13 @@ html body #send_textarea#send_textarea { --bs-placeholder: ${cssString(state.pla
     $(".ve-pick-hint").hidden = true;
     $(".ve-controller").hidden = !compact;
     $(".ve-sheet").hidden = compact;
+    syncLayoutWatch();
   }
   function pick(event) {
     if (!picking || event.composedPath().includes(host)) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    selectElement(event.target);
+    selectElement(pickGuides.targetFor(event.target));
   }
   function selectElement(element) {
     const choice = describeTarget(hostWin, element);
@@ -6436,7 +6538,7 @@ html body #send_textarea#send_textarea { --bs-placeholder: ${cssString(state.pla
     targetKey = existing || "picked-" + (Object.keys(customTargets).length + 1);
     customTargets[targetKey] = choice.target;
     currentTarget = choice.node;
-    mode = choice.target.modes.includes("fontSize") ? "fontSize" : "radius";
+    mode = choice.target.modes.includes("radius") ? "radius" : choice.target.modes[0];
     getBaseline(targetKey);
     compact = false;
     stopPick();
@@ -6675,9 +6777,15 @@ html body #send_textarea#send_textarea { --bs-placeholder: ${cssString(state.pla
       const row = doc.createElement("div");
       row.className = "ve-change";
       const label = doc.createElement("span"), value = doc.createElement("b");
-      label.textContent = edit.kind === "font" ? "正文字号" : "输入框提示文字";
-      value.textContent = edit.kind === "font" ? `${edit.value} px` : edit.value || "（留空）";
+      label.textContent = "输入框提示文字";
+      value.textContent = edit.value || "（留空）";
       row.append(label, value);
+      container.append(row);
+    }
+    if (state.removeFonts) {
+      const row = doc.createElement("div");
+      row.className = "ve-change";
+      row.textContent = `已清理 ${legacyFonts.count} 处工作室旧版字号覆盖`;
       container.append(row);
     }
     if (state.placeholder !== null) {
@@ -6739,43 +6847,18 @@ html body #send_textarea#send_textarea { --bs-placeholder: ${cssString(state.pla
   function renderText() {
     const container = $(".ve-text-settings");
     container.replaceChildren();
-    for (const font of textResources.fonts) {
+    if (legacyFonts.count) {
       const card = doc.createElement("article");
       card.className = "ve-text-card";
       const title = doc.createElement("b");
-      title.textContent = "正文字号";
+      title.textContent = "清理旧版字号修改";
       const note = doc.createElement("small");
-      note.textContent = `已确认不跟随酒馆字体比例 · 第 ${font.line} 行`;
-      const controls = doc.createElement("div");
-      controls.className = "ve-font-controls";
-      const input = doc.createElement("input");
-      input.type = "number";
-      input.min = "8";
-      input.max = "48";
-      input.step = "1";
-      input.setAttribute("aria-label", `正文字号，第 ${font.line} 行`);
-      input.value = state.text[font.id]?.value ?? font.size;
-      const set = (value) => {
-        if (saving || imageBusy || !Number.isFinite(value)) return;
-        value = Math.round(Math.min(48, Math.max(8, value)) * 10) / 10;
-        if (value === (state.text[font.id]?.value ?? font.size)) return;
-        state.text[font.id] = { kind: "font", value, selectors: font.selectors };
-        saveTextChange();
-      };
-      const minus = doc.createElement("button"), plus = doc.createElement("button");
-      minus.innerHTML = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 12h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
-      plus.innerHTML = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 12h12M12 6v12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
-      minus.setAttribute("aria-label", "减小正文字号");
-      plus.setAttribute("aria-label", "增大正文字号");
-      minus.onclick = () => set(Number(input.value) - 1);
-      plus.onclick = () => set(Number(input.value) + 1);
-      input.onchange = () => {
-        if (input.value !== "") set(Number(input.value));
-      };
-      const unit = doc.createElement("span");
-      unit.textContent = "px";
-      controls.append(minus, input, unit, plus);
-      card.append(title, note, controls);
+      note.textContent = "只清理有工作室标记的字号覆盖，保留原美化设置。可撤销，保存后生效。";
+      const button = doc.createElement("button");
+      button.dataset.action = "remove-fonts";
+      button.textContent = state.removeFonts ? "已清理，可撤销" : "清理 " + legacyFonts.count + " 处旧版字号覆盖";
+      button.disabled = Boolean(state.removeFonts) || saving || imageBusy;
+      card.append(title, note, button);
       container.append(card);
     }
     const textarea = doc.querySelector("#send_textarea");
@@ -6833,6 +6916,14 @@ html body #send_textarea#send_textarea { --bs-placeholder: ${cssString(state.pla
       $(".ve-sheet").hidden = true;
       $(".ve-controller").hidden = true;
       $(".ve-pick-hint").hidden = false;
+      syncLayoutWatch();
+      return;
+    }
+    if (name === "remove-fonts") {
+      if (!legacyFonts.count || state.removeFonts) return;
+      state.removeFonts = true;
+      history.push(state);
+      restoreHistory(state, "已清理可识别的旧版字号覆盖；可撤销，保存后写入原美化。");
       return;
     }
     if (name === "cancel-pick") return stopPick();
@@ -6964,7 +7055,7 @@ html body #send_textarea#send_textarea { --bs-placeholder: ${cssString(state.pla
   $(".ve-picked-list").addEventListener("change", (event) => {
     targetKey = event.target.value;
     currentTarget = visibleTarget(targetKey);
-    mode = targetInfo(targetKey).modes.includes("fontSize") ? "fontSize" : "radius";
+    mode = targetInfo(targetKey).modes.includes("radius") ? "radius" : targetInfo(targetKey).modes[0];
     locate(false);
     render();
   });
@@ -7029,7 +7120,9 @@ html body #send_textarea#send_textarea { --bs-placeholder: ${cssString(state.pla
     destroyed = true;
     endHold();
     observer.disconnect();
-    hostWin.cancelAnimationFrame(raf);
+    layoutWatch?.stop();
+    layoutWatch = null;
+    pickGuides.clear();
     previewStyle.remove();
     restoreNativeMedia();
     hostWin.removeEventListener("click", pick, true);
@@ -7046,7 +7139,9 @@ html body #send_textarea#send_textarea { --bs-placeholder: ${cssString(state.pla
     endHold();
     stopPick();
     suspended = true;
-    hostWin.cancelAnimationFrame(raf);
+    layoutWatch?.stop();
+    layoutWatch = null;
+    pickGuides.clear();
     previewStyle.textContent = "";
     restoreNativeMedia();
     host.style.setProperty("display", "none", "important");

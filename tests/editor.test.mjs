@@ -16,7 +16,7 @@ test('generic numeric fields enforce their own bounds', () => {
   assert.equal(stepValue(DEFAULT_VALUES,'width',-500).width,1);
   assert.equal(stepValue(DEFAULT_VALUES,'height',3000).height,2000);
   assert.equal(stepValue(DEFAULT_VALUES,'opacity',5).opacity,100);
-  assert.equal(stepValue(DEFAULT_VALUES,'fontSize',-500).fontSize,8);
+  assert.equal(buildEditedCss('',{'picked-1':{target:{generic:true,name:'文字',selector:'#one'},values:{fontSize:8},changed:['fontSize']}}),'');
 });
 
 test('composer lift preserves host positioning, keyboard rules, transform and safe-area variables', () => {

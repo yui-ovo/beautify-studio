@@ -3,7 +3,7 @@ import { editTextCss, cssString } from '../src/core/text.js';
 import { buildEditedCss, DEFAULT_VALUES } from '../src/core/editor.js';
 import { startEditorRuntime } from '../src/host/editor-runtime.js';
 import { openVisualEditor } from '../src/host/visual-editor.js';
-import { describeTarget } from '../src/host/picker.js';
+import { describeTarget, collectPickGuides, MAX_PICK_GUIDES, watchSelectionLayout } from '../src/host/picker.js';
 
 const out = document.querySelector('pre');
 let passes = 0, failures = 0;
@@ -18,27 +18,30 @@ document.head.append(base);
 const source = document.createElement('style'); source.id = 'custom-style'; document.head.append(source);
 const text = document.querySelector('#chat p'), shell = document.querySelector('#form_sheld'), form = document.querySelector('#send_form'), input = document.querySelector('textarea');
 const font = () => parseFloat(getComputedStyle(text).fontSize);
-test('fixed author font is detected and probes restore stylesheet and font scale', () => {
+test('opening and inspecting never probes fonts or offers font controls', () => {
   source.textContent = '#chat p{font-size:18px!important}';
-  const before = source.sheet.cssRules[0].cssText;
-  const result = inspectText(window, source);
-  equal(result.fonts.length, 1); equal(font(), 18); equal(source.sheet.cssRules[0].cssText, before); equal(document.documentElement.style.getPropertyValue('--fontScale'), '');
-  const f = result.fonts[0]; source.textContent = editTextCss(source.textContent, {[f.id]:{kind:'font',value:13,selectors:f.selectors}}); equal(font(),13);
+  const nativeSet = CSSStyleDeclaration.prototype.setProperty;
+  const writes = [];
+  CSSStyleDeclaration.prototype.setProperty = function(name, ...args) { if (['--fontScale','font-size','font'].includes(name)) writes.push(name); return nativeSet.call(this,name,...args); };
+  let close;
+  try {
+    equal(inspectText(window, source).fonts, undefined);
+    close = openVisualEditor({hostWin:window,theme:{name:'test'},onClose(){},onSave(){},onDownload(){}});
+    const root = document.querySelector('#beautify-visual-editor').shadowRoot;
+    equal(root.querySelector('[data-mode="fontSize"]'),null);
+    equal(root.querySelector('.ve-font-controls'),null);
+    equal(describeTarget(window,text).target.modes.includes('fontSize'),false);
+    equal(font(),18); equal(writes.length,0);
+  } finally { close?.(); CSSStyleDeclaration.prototype.setProperty = nativeSet; }
+  equal(font(),18);
 });
-test('saved font remains editable after reopening with nested selector lists', () => {
-  const f = inspectText(window, source).fonts[0]; if (!f) throw Error('saved font not detected');
-  source.textContent = editTextCss(source.textContent,{[f.id]:{kind:'font',value:12,selectors:f.selectors}}); equal(font(),12);
+
+test('inactive hint rules never become editable because their text matches', () => {
+  source.textContent = '@media(min-width:99999px){#send_form::after{content:"Hello"}}#send_form#send_form::after{content:"Hello"}';
+  const hints = inspectText(window,source).hints;
+  equal(hints.length,1); equal(hints[0].selector,'#send_form#send_form::after');
 });
-test('responsive font stays hidden', () => { source.textContent = '#chat p{font-size:calc(var(--fontScale)*18px)}'; equal(inspectText(window, source).fonts.length,0); });
-test('fixed font shorthand preserves font family while changing size', () => {
-  source.textContent = '#chat p{font:18px serif}'; const f = inspectText(window,source).fonts[0]; if (!f) throw Error('shorthand not detected');
-  source.textContent = editTextCss(source.textContent,{[f.id]:{kind:'font',value:15,selectors:f.selectors}}); equal(font(),15); equal(getComputedStyle(text).fontFamily,'serif');
-});
-test('inactive and losing fixed rules stay hidden', () => { source.textContent = '@media(min-width:99999px){#chat p{font-size:18px}}#chat p{font-size:19px}#chat#chat p{font-size:var(--mainFontSize)}'; equal(inspectText(window, source).fonts.length,0); });
-test('font fixed on body can be adjusted without changing toolbar', () => {
-  source.textContent = 'body{font-size:19px}'; const f = inspectText(window,source).fonts[0]; if (!f) throw Error('not detected');
-  source.textContent = editTextCss(source.textContent,{[f.id]:{kind:'font',value:14,selectors:f.selectors}}); equal(font(),14); equal(getComputedStyle(document.body).fontSize,'19px');
-});
+
 test('conditional author hint changes and still hides during typing', () => {
   source.textContent = '#send_form:has(textarea:placeholder-shown)::after{content:"Say something…"}';
   const h = inspectText(window,source).hints[0]; if (!h) throw Error('not detected');
@@ -75,12 +78,15 @@ test('two-page navigation preserves unsaved edits and full-code search across sw
   try {
     const root = document.querySelector('#beautify-visual-editor').shadowRoot;
     equal(root.querySelectorAll('.workspace-nav button').length,2);
-    root.querySelector('.ve-font-controls button:last-child').click(); equal(font(),19);
+    const hint = root.querySelector('.ve-text-settings input'); hint.value='草稿提示';
+    root.querySelector('.ve-text-settings button').click();
+    if (!document.querySelector('#beautify-visual-preview').textContent.includes('草稿提示')) throw Error('hint edit lost');
     root.querySelector('[data-tab="notes"]').click();
     const input = root.querySelector('.ve-search input'); input.value='font-size'; input.dispatchEvent(new Event('input',{bubbles:true}));
     equal(root.querySelector('.ve-note mark').textContent,'font-size');
     close.suspend(); equal(font(),18);
-    close.resume(); equal(font(),19); equal(input.value,'font-size');
+    close.resume(); equal(font(),18); equal(input.value,'font-size');
+    if (!document.querySelector('#beautify-visual-preview').textContent.includes('草稿提示')) throw Error('draft lost');
     equal(root.querySelector('[data-page="notes"]').hidden,false);
     root.querySelector('[data-action="undo"]').click(); equal(font(),18);
   } finally { close(); }
@@ -93,7 +99,10 @@ test('universal picker suppresses button actions and edits only the selected ele
   let saved;
   try {
     const root=document.querySelector('#beautify-visual-editor').shadowRoot;
-    root.querySelector('[data-action="pick"]').click(); selected.click(); equal(clicks,0);
+    root.querySelector('[data-action="pick"]').click();
+    if (!root.querySelectorAll('.ve-pick-box').length) throw Error('no visible guides');
+    if (root.querySelectorAll('.ve-pick-box').length > MAX_PICK_GUIDES) throw Error('too many guides');
+    selected.click(); equal(clicks,0); equal(root.querySelectorAll('.ve-pick-box').length,0);
     equal(root.querySelector('.ve-picked').hidden,false);
     const otherColor=getComputedStyle(other).color;
     root.querySelector('.ve-sheet [data-mode="textColor"]').click();
@@ -117,5 +126,67 @@ test('picker escapes unusual IDs, selects SVG as a unit and rejects its own UI',
   try {equal(describeTarget(window,path).node,svg);} finally {svg.remove();}
   equal(describeTarget(window,document.head),null);
 });
+test('known old font cleanup previews, undoes, exports and restores on close', () => {
+  source.textContent = '#chat p{font-size:18px}/* === BEAUTIFY_VISUAL_START === */:is(#beautify-specificity#beautify-specificity, #chat p):where(#chat p){font-size:10px!important;color:red}/* === BEAUTIFY_VISUAL_END === */';
+  let exported;
+  const close=openVisualEditor({hostWin:window,theme:{name:'test'},onClose(){},onSave(){},onDownload(theme){exported=theme.custom_css;}});
+  try {
+    const root=document.querySelector('#beautify-visual-editor').shadowRoot;
+    equal(font(),10);
+    root.querySelector('[data-action="remove-fonts"]').click(); equal(font(),18);
+    root.querySelector('[data-action="undo"]').click(); equal(font(),10);
+    root.querySelector('[data-action="redo"]').click(); equal(font(),18);
+    root.querySelector('[data-action="download"]').click();
+    if (exported.includes('10px')) throw Error('old font exported');
+    equal(getComputedStyle(text).color,'rgb(255, 0, 0)');
+  } finally {close();}
+  equal(font(),10);
+});
+
+test('viewport guide scan stays bounded and excludes its own editor', () => {
+  let hits=0; const original=document.elementsFromPoint.bind(document);
+  document.elementsFromPoint=(...args)=>{hits++;return original(...args);};
+  try {
+    const candidates=collectPickGuides(window);
+    if(hits>224)throw Error('unbounded hit tests');
+    if(candidates.length>32)throw Error('unbounded guides');
+    if(candidates.some(item=>item.node.closest('#beautify-visual-editor')))throw Error('self guide');
+  } finally { document.elementsFromPoint=original; }
+});
+
+// Async lifecycle checks exercise actual observer delivery and coalescing.
+try {
+  let refreshes=0;
+  const host=document.createElement('div'); document.body.append(host);
+  const tracker=watchSelectionLayout(window,host,()=>refreshes++);
+  equal(refreshes,1);
+  await new Promise(r=>setTimeout(r,220));
+  const idle=refreshes;
+  await new Promise(r=>setTimeout(r,220)); equal(refreshes,idle);
+  for(let i=0;i<30;i++) { fixture.dataset.change=String(i); window.dispatchEvent(new Event('scroll')); }
+  await new Promise(r=>setTimeout(r,220)); equal(refreshes,idle+1);
+  tracker.stop(); const stopped=refreshes;
+  fixture.dataset.change='stopped'; window.dispatchEvent(new Event('resize'));
+  await new Promise(r=>setTimeout(r,220)); equal(refreshes,stopped); host.remove();
+  let scans=0; const hitTest=document.elementsFromPoint.bind(document);
+  document.elementsFromPoint=(...args)=>{scans++;return hitTest(...args);};
+  const close=openVisualEditor({hostWin:window,theme:{name:'test'},onClose(){},onSave(){},onDownload(){}});
+  try {
+    const root=document.querySelector('#beautify-visual-editor').shadowRoot;
+    equal(scans,0);
+    root.querySelector('[data-action="pick"]').click();
+    if (!scans) throw Error('picker never sampled');
+    root.querySelector('[data-action="cancel-pick"]').click(); const afterCancel=scans;
+    equal(root.querySelectorAll('.ve-pick-box').length,0);
+    window.dispatchEvent(new Event('resize'));
+    await new Promise(r=>setTimeout(r,240)); equal(scans,afterCancel);
+    root.querySelector('[data-action="pick"]').click();
+    close.suspend(); const afterSuspend=scans;
+    window.dispatchEvent(new Event('scroll'));
+    await new Promise(r=>setTimeout(r,240)); equal(scans,afterSuspend);
+    close.resume(); equal(scans,afterSuspend);
+  } finally {close();document.elementsFromPoint=hitTest;}
+  passes++; out.textContent+='PASS guide lifecycle coalesces updates, stays idle and stops completely\n';
+} catch(e) {failures++;out.textContent+='FAIL guide lifecycle: '+e.message+'\n';}
 out.textContent += `\n${passes} passed, ${failures} failed`;
 document.title = failures ? 'FAIL browser regressions' : 'PASS browser regressions';
